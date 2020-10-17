@@ -110,7 +110,7 @@ skewness(usVoters$ftjournal)
 
 >  As a modern survey, the ANES 2018 Pilot Study we can expect the selection to be from iid drawn.  You might worry that some people are more likely to respond than others (some more motivated for the money since this is a survey they get paid for).  But this isn't a problem for iid, it just means that the population of respondents is not the same as the population representing all Americans.  It's a problem for generalizability. Since there is only a finite number of Americans, it is impossible to have perfect independence.  Once a person is drawn, they cannot be drawn again, so the distribution for the next draw has changed.  However, the change is likely to be very small, so we can safely ignore these finite-sample effects.  On the whole, there are issues to worry about, but modern surveys like the ANES 2018 Pilot Study do a pretty good job of making the iid assumption valid. Codebook and User’s Guide to the ANES 2018 Pilot Study mentiones that the survey participation is independent of variables measured in the survey. 
 
-### Based on your EDA, selecting an appropriate hypothesis test
+### Based on our EDA, selecting an appropriate hypothesis test
 
 > 1. Since we are comparing means of two samples, it will be a two-sample test. 
 > 2. Since the variables are of ordinal scale, parametric tests cannot be used.
@@ -130,7 +130,6 @@ skewness(usVoters$ftjournal)
 > US voters do not have equal respect for the police and journalists
 
 ### Conducting the chosen test
-Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
 
 ```{r}
 more_police = sum( usVoters$ftjournal < usVoters$ftpolice)
@@ -146,21 +145,148 @@ binom.test(more_police , trials)
 
 ## Question 2: Are Republican voters older or younger than Democratic voters?
 
-### Introduce your topic briefly.  (5 points)
-Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+### Introducing the topic
 
->The variable pid7x is a part of YouGov profile survey data. These data were collected on previously-completed questionnaires.
-pid7 is not available on the initial release due to a processing error but may be available on
-a future data release. Note that the party ID variable, , is provided
+> Concept: To measure the difference in ages of voters who identified as Republican or Democratic, we can use a metric variable because age is (just!) a number. 
 
-### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
-This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+> Operationalization: We have to find a variable that shows if the voter identifies as Republican or Democratic. The variable 'pid1d' captures the result of the question "Generally speaking, do you usually think of yourself as a Democrat, a Republican" in the survey matches closely to what we want and thus, we will use it. This variable takes one of the following six values:
+> -7 No Answer
+> -1 inapplicable, legitimate skip
+> 1 Democrat
+> 2 Republican
+> 3 independent
+> 4 something else
 
-### Based on your EDA, select an appropriate hypothesis test.  (5 points)
-Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+> There is another variable 'pid7x' which is a part of YouGov profile survey data that contains this affiliation. However, since these data were collected on previously-completed questionnaires, we identify the value in 'pid1d' being more recent and therefore will use that for the analysis our question. 
 
-### Conduct your test. (5 points)
-Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+> For the age, we can use the 'birthyr' variablew that is captured as a part of the survey, subtract that from the current year and get age. 
+
+### Exploratory data analysis (EDA) of the relevant variables
+
+> Variables: birthyr, pid1d
+
+> Types: pid1d is a nominal level variable, however, we are only using that to separate our two samples that we are going to compare the ages for. Age is a ratio level variable.
+         
+> Number of Entries 
+
+```{r}
+library(tidyverse)
+currentYr <- lubridate::isoyear(Sys.Date())
+usVoters$age <- currentYr-usVoters$birthyr
+democrats <- usVoters  %>% filter(usVoters$pid1d==2)
+republicans <- usVoters  %>% filter(usVoters$pid1d==3)
+
+paste("Number of Entries for age of democrats:", length(democrats$age))
+paste("Summary for age of democrats: ")
+summary(democrats$age)
+paste("Number of Entries for age of republicans:", length(republicans$age))
+paste("Summary for age of republicans: ")
+summary(republicans$age)
+```
+
+> There are no Null Values for ages of democrats or republicans
+
+```{r}
+paste("Number of Null Values for ages of democrats:", length(which(is.na(democrats$age))))
+paste("Number of Null Values for ages of republicans:", length(which(is.na(democrats$age))))
+```
+
+> There are no duplicate rows in the dataset of US Voters as we had already established while answering research question 1
+
+> We will draw a histogram of ages of democrats to observe the distribution and any outliers
+
+```{r}
+hist(democrats$age)
+```
+
+> To see the deviation from normality, we will plot a qqnorm plot
+
+```{r}
+qqnorm(democrats$age)
+```
+
+> We will now plot and observe the skewness of age of democrats
+
+```{r}
+library(e1071)  
+skewness(democrats$age)
+```
+
+> The distribution for age of democrats is not far from normal, and with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+
+> We will draw a histogram of ages of republicans to observe the distribution and any outliers
+
+```{r}
+hist(republicans$age)
+```
+
+> To see the deviation from normality, we will plot a qqnorm plot
+
+```{r}
+qqnorm(republicans$age)
+```
+
+> We will now plot and observe the skewness of age of republicans
+
+```{r}
+library(e1071)  
+skewness(republicans$age)
+```
+
+> The distribution for age of republicans is not far from normal, and with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+
+> As discussed earlier the sample is iid drawn. However, we must be cautious in this set with the age as the respondents of lower ages might be more motivated (because of the money they can earn through it) to respond than those of higher ages. It will apply to both the sets - democrats and republicans. 
+
+### Based on our EDA, selecting an appropriate hypothesis test
+
+> 1. Since we are comparing means of two samples, it will be a two-sample test. 
+> 2. Since the variable we are comparing is a metric variable, parametric tests can be used.
+> 3. Since the two variables we are looking at are answered by the different people and there is no dependency we can take advantage of, we will do a unpaired test. 
+> With all these above reasons, we narrow our choice of test down to an unpaired t-test.
+
+> Assumptions to be able to use the unpaired t-test are:
+> 1. Metric variable
+> 2. Data is paired and drawn from i.i.d samples
+> 3. Distribution of the variable is (not too un-)normal
+
+> Since all the assumptions are satisfied, we will not go ahead with using the signunpaired t-test.
+
+> The Null Hypothesis we will be testing is:
+> Republican voters are no more older or younger than Democratic voters
+
+> We will do a two-tailed tests since we are only interested in the alternative hypothesis:
+> Republican voters are either older or younger than Democratic voters
+
+### Conducting the chosen test
+
+```{r}
+t.test(democrats$age, republicans$age, paired=F)
+```
+
+> Since the p-value is greater than 0.05 (therefore, also greater than 0.01), the test is not statistically significant to reject the null hypothesis
+
+> Practical Significance:
+
+```{r}
+meanage_dem = mean(democrats$age)
+sdage_dem = sd(democrats$age)
+paste("Mean of Age of Democrats: ", meanage_dem, " Sampling Standard Deviation in Age Democates: ", sdage_dem)
+
+meanage_rep = mean(republicans$age)
+sdage_rep = sd(republicans$age)
+paste("Mean of Age of Republicans: ", meanage_rep, " Sampling Standard Deviation in Age Republicans: ", sdage_rep)
+```
+
+> The difference in means of ages of Democrats and Republicans is only 0.82 with a small difference in sampling standard deviations too (0.3). And, we can from the graph below, a substancial area overlapping, so there is no practical significance to reject the null hypothesis either. 
+
+```{r}
+library(ggpubr)
+
+dems_reps <- usVoters %>%   filter(usVoters$pid1d==2 | usVoters$pid1d==3)
+dems_reps$party <- ifelse(dems_reps$pid1d==2,'democrat','republican')
+ggdensity(dems_reps, x = "age", fill = "party", palette = "jco")
+
+```
 
 
 ## Question 3: Do a majority of independent voters believe that the federal investigations of Russian election interference are baseless?
