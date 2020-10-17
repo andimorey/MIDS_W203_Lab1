@@ -1,0 +1,223 @@
+---
+title: "Lab 1: Comparing Means"
+author: 'Srishti Mehra'
+output:
+  pdf_document: default
+---
+
+```{r, include=FALSE}
+options(tinytex.verbose = TRUE)
+```
+
+
+```{r}
+A = read.csv("anes_pilot_2018.csv")
+```
+    
+# Research Questions
+
+## Question 1: Do US voters have more respect for the police or for journalists?
+
+### Introducing the topic
+
+> Concept: To measure the amount of respect US voters have for police and jounralists, since it is subjective, we cannot use a metric variable. We have to use a scale like the Likert scale to possibly capture this data and therefore it can be best defined with an ordinal variable. 
+
+
+> Operationalization: From a list of data points collected in the ANES 2018 Pilot Study, two are people's ratings of the police and of journalists in variables 'ftpolice' and 'ftjournal' respectively. The questions to collect these are "How would you rate the police?" and "How would you rate journalists?". These are the closest data points available to our question since they are the only ones related to what the sample population feels about the police and journalists respectively. The answers to these questions are collected on a Likert scale.
+>We are also going to take a subset of the total sample available from the ANES 2018 Pilot study of those people who have reported that they voted. To do so we will consider the variable 'turnout18' which contains the answer to the question "In the election held on November 6, did you definitely vote in person on election?". The variable holds one of the following five values:
+
+> 1 - Definitely voted in person on Nov 6
+> 2 - Definitely voted in person, before Nov 6
+> 3 - Definitely voted by mail
+> 4 - Definitely did not vote
+> 5 - Not completely sure
+
+> Another variable that could inform a portion of the population who have the 'turnout18' variable value as 5 who could have possibly voted can be covered from the variable 'turnout18ns'. This variable captures answer to the question "If you had to guess, would you say that you probably did vote in the election?". This variable takes one of the following three values: 
+
+> 1 - inapplicable, legitimate skip
+> 2 - Probably did vote
+> 3 - Probably did not vote
+
+> For our analysis, we will only consider the population that have value 1, 2, or 3 for the variable 'turnout18' to take the conserative approach in considering US voters.
+
+
+> Concerns or Gaps:
+
+> 1. The data collected is for rating police and journalists in general, not particularly based on respect. Inferring respect from a total rating will not give us accurate conclusions to draw.
+> 2. One person's interpretation of the Likert scale can be very different from another's, so if one person could think of brilliant as 90, another could think of brilliant as 94. This must be kept in mind as caution while reading the conclusion.
+
+### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
+
+> Variables: ftpolice, ftjournal
+
+> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a Likert scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. However, t
+         
+> Number of Entries 
+
+```{r}
+library(tidyverse)
+usVoters <- A  %>% filter(A$turnout18 > 0 & A$turnout18 < 4)
+paste("Number of Entries for ftpolice:", length(usVoters$ftpolice))
+paste("Summary for ftpolice: ")
+summary(usVoters$ftpolice)
+paste("Number of Entries for ftjournal:", length(usVoters$ftjournal))
+paste("Summary for ftjournal: ")
+summary(usVoters$ftjournal)
+```
+
+> There are no Null Values for ftpolice and ftjournal
+
+```{r}
+paste("Number of Null Values for ftpolice:", length(which(is.na(usVoters$ftpolice))))
+paste("Number of Null Values for ftjournal:", length(which(is.na(usVoters$ftjournal))))
+```
+
+> There are no duplicate rows in the dataset of US Voters
+
+```{r}
+paste("Number of Duplicate Values for the dataset usVoters:", length(which(duplicated(usVoters))))
+```
+
+> Will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
+
+```{r}
+hist(usVoters$ftpolice)
+```
+
+> We will now plot and observe the skewness of ftpolice variable
+
+```{r}
+library(e1071)  
+skewness(usVoters$ftpolice)
+```
+
+> The distribution for ftpolice is not normal, however with the number of observations being well above the thumb rule and the skewness is at a moderate level (skewness is between -1 and -0.5 or between 0.5 and 1), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+
+```{r}
+hist(usVoters$ftjournal)
+```
+
+> We will now plot and observe the skewness of ftpolice variable
+
+```{r}
+library(e1071)  
+skewness(usVoters$ftjournal)
+```
+
+> The distribution for ftjournal is not normal, however with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5,), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+
+> We will now observe the variable to see if it is identically and independently distributed (iid)
+
+>  As a modern survey, the ANES 2018 Pilot Study we can expect the selection to be from iid drawn.  You might worry that some people are more likely to respond than others (some more motivated for the money since this is a survey they get paid for).  But this isn't a problem for iid, it just means that the population of respondents is not the same as the population representing all Americans.  It's a problem for generalizability. Since there is only a finite number of Americans, it is impossible to have perfect independence.  Once a person is drawn, they cannot be drawn again, so the distribution for the next draw has changed.  However, the change is likely to be very small, so we can safely ignore these finite-sample effects.  On the whole, there are issues to worry about, but modern surveys like the ANES 2018 Pilot Study do a pretty good job of making the iid assumption valid. Codebook and User’s Guide to the ANES 2018 Pilot Study mentiones that the survey participation is independent of variables measured in the survey. 
+
+### Based on your EDA, select an appropriate hypothesis test.  (5 points)
+Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+> 1. Since we are comparing means of two samples, it will be a two-sample test. 
+> 2. Since the variables are of ordinal scale, parametric tests cannot be used.
+> 3. Since the two variables we are looking at are answered by the same person, there is enough dependence that we can take advantage of if we do a paired test. 
+> With all these above reasons, we narrow our choice of test down to Sign Test.
+
+> Assumptions to be able to use the Sign Test are:
+> 1. Variables represented are of ordnial Scale
+> 2. Data is paired and drawn from i.i.d samples
+
+> Since both the assumptions are satisfied, we will not go ahead with using the sign test.
+
+> The Null Hypothesis we will be testing is:
+> US voters have equal respect for the police and journalists
+
+> We will do a two-tailed tests since we are only interested in the alternative hypothesis:
+> US voters do not have equal respect for the police and journalists
+
+### Conduct your test. (5 points)
+Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+
+```{r}
+more_police = sum( usVoters$ftjournal < usVoters$ftpolice)
+trials = sum( usVoters$ftjournal < usVoters$ftpolice | usVoters$ftjournal > usVoters$ftpolice)
+binom.test(more_police , trials)
+```
+
+> The p-value being well under 0.01 (statistical significance levels generally acceptable) indicating that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
+
+>To now see the statistical significance:
+> We see that the probability of US voters have respecting police more comes up as 0.56 from the Sign Test. In our hypothesis we assumed it would be 0.5 reflecting that US voters have equal respect for the police and journalists. Thus, we see that the effect is not a very large one even though the p-value was very low to reflect a statistically significant result.
+
+
+
+## Question 2: Are Republican voters older or younger than Democratic voters?
+
+### Introduce your topic briefly.  (5 points)
+Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+
+>The variable pid7x is a part of YouGov profile survey data. These data were collected on previously-completed questionnaires.
+pid7 is not available on the initial release due to a processing error but may be available on
+a future data release. Note that the party ID variable, , is provided
+
+### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
+This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+
+### Based on your EDA, select an appropriate hypothesis test.  (5 points)
+Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+### Conduct your test. (5 points)
+Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+
+
+## Question 3: Do a majority of independent voters believe that the federal investigations of Russian election interference are baseless?
+
+### Introduce your topic briefly.  (5 points)
+Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+
+### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
+This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+
+### Based on your EDA, select an appropriate hypothesis test.  (5 points)
+Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+### Conduct your test. (5 points)
+Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+
+
+## Question 4: Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
+
+### Introduce your topic briefly.  (5 points)
+Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+
+### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
+This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+
+### Based on your EDA, select an appropriate hypothesis test.  (5 points)
+Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+### Conduct your test. (5 points)
+Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+
+
+## Question 5: Select a fifth question that you believe is important for understanding the behavior of voters
+
+### Clearly argue for the relevance of this question.  (10 points)
+In words, clearly state your research question and argue why it is important for understanding the recent voting behavior. Explain it as if you were presenting to an audience that includes technical and non technical members.
+
+Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+
+### Perform EDA and select your hypothesis test (5 points)
+
+Perform an exploratory data analysis (EDA) of the relevant variables.
+
+This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+
+Based on your EDA, select an appropriate hypothesis test.
+Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+### Conduct your test. (2 points)
+Explain (1) the statistical significance of your result, and (2) the practical significance of your result.
+
+### Conclusion (3 points)
+Clearly state the conclusion of your hypothesis test and how it relates to your research question.
+
+Finally, briefly present your conclusion in words as if you were presenting to an audience that includes technical and non technical members.
+
+
+
