@@ -410,15 +410,6 @@ paste("Number of independent voters in the sample who disapprove of the Mueller 
 
 > This shows there is a higher ratio of independent voters who approve of the Mueller Investigation. We can deduce that they must think the federal investigations of Russian election interference were not baseless. Therefore, there is practical significance in rejecting the null hypothesis.   
 
-```{r}
-library(ggpubr)
-
-dems_reps <- usVoters %>%   filter(usVoters$pid1d==2 | usVoters$pid1d==3)
-dems_reps$party <- ifelse(dems_reps$pid1d==2,'democrat','republican')
-ggdensity(dems_reps, x = "age", fill = "party", palette = "jco")
-
-```
-
 
 ## Question 4: Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
 
