@@ -46,7 +46,7 @@ A = read.csv("anes_pilot_2018.csv")
 > 1. The data collected is for rating police and journalists in general, not particularly based on respect. Inferring respect from a total rating will not give us accurate conclusions to draw.
 > 2. One person's interpretation of the Likert scale can be very different from another's, so if one person could think of brilliant as 90, another could think of brilliant as 94. This must be kept in mind as caution while reading the conclusion.
 
-### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
+### Exploratory data analysis (EDA) of the relevant variables
 
 > Variables: ftpolice, ftjournal
 
@@ -110,8 +110,7 @@ skewness(usVoters$ftjournal)
 
 >  As a modern survey, the ANES 2018 Pilot Study we can expect the selection to be from iid drawn.  You might worry that some people are more likely to respond than others (some more motivated for the money since this is a survey they get paid for).  But this isn't a problem for iid, it just means that the population of respondents is not the same as the population representing all Americans.  It's a problem for generalizability. Since there is only a finite number of Americans, it is impossible to have perfect independence.  Once a person is drawn, they cannot be drawn again, so the distribution for the next draw has changed.  However, the change is likely to be very small, so we can safely ignore these finite-sample effects.  On the whole, there are issues to worry about, but modern surveys like the ANES 2018 Pilot Study do a pretty good job of making the iid assumption valid. Codebook and User’s Guide to the ANES 2018 Pilot Study mentiones that the survey participation is independent of variables measured in the survey. 
 
-### Based on your EDA, select an appropriate hypothesis test.  (5 points)
-Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+### Based on your EDA, selecting an appropriate hypothesis test
 
 > 1. Since we are comparing means of two samples, it will be a two-sample test. 
 > 2. Since the variables are of ordinal scale, parametric tests cannot be used.
@@ -130,7 +129,7 @@ Explain why your test is the most appropriate choice.  List and evaluate all ass
 > We will do a two-tailed tests since we are only interested in the alternative hypothesis:
 > US voters do not have equal respect for the police and journalists
 
-### Conduct your test. (5 points)
+### Conducting the chosen test
 Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
 
 ```{r}
@@ -143,7 +142,6 @@ binom.test(more_police , trials)
 
 >To now see the statistical significance:
 > We see that the probability of US voters have respecting police more comes up as 0.56 from the Sign Test. In our hypothesis we assumed it would be 0.5 reflecting that US voters have equal respect for the police and journalists. Thus, we see that the effect is not a very large one even though the p-value was very low to reflect a statistically significant result.
-
 
 
 ## Question 2: Are Republican voters older or younger than Democratic voters?
