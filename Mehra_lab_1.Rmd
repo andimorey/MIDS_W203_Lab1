@@ -49,7 +49,7 @@ A = read.csv("anes_pilot_2018.csv")
 
 > Variables: ftpolice, ftjournal
 
-> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a Likert scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. However, t
+> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a Likert scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. We cannot however, apply any arithmetic operaters (like +, -, /) to such variables.
          
 > Number of Entries 
 
@@ -77,7 +77,7 @@ paste("Number of Null Values for ftjournal:", length(which(is.na(usVoters$ftjour
 paste("Number of Duplicate Values for the dataset usVoters:", length(which(duplicated(usVoters))))
 ```
 
-> Will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
+> [ATTENTION!!] Will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
 
 ```{r}
 hist(usVoters$ftpolice)
@@ -110,7 +110,7 @@ skewness(usVoters$ftjournal)
 
 ### Based on our EDA, selecting an appropriate hypothesis test
 
-> 1. Since we are comparing means of two samples, it will be a two-sample test. 
+> 1. Since we are comparing two samples, it will be a two-sample test. 
 > 2. Since the variables are of ordinal scale, parametric tests cannot be used.
 > 3. Since the two variables we are looking at are answered by the same person, there is enough dependence that we can take advantage of if we do a paired test. 
 > With all these above reasons, we narrow our choice of test down to Sign Test.
@@ -119,7 +119,7 @@ skewness(usVoters$ftjournal)
 > 1. Variables represented are of ordnial Scale
 > 2. Data is paired and drawn from i.i.d samples
 
-> Since both the assumptions are satisfied, we will not go ahead with using the sign test.
+> Since both the assumptions are satisfied, we will go ahead with using the sign test.
 
 > The Null Hypothesis we will be testing is:
 > US voters have equal respect for the police and journalists
@@ -137,7 +137,7 @@ trials = sum( usVoters$ftjournal < usVoters$ftpolice | usVoters$ftjournal > usVo
 binom.test(more_police , trials)
 ```
 
-> The p-value being well under 0.01 (statistical significance levels generally acceptable) indicating that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
+> The p-value being well under 0.01 (statistical significance we decided to consider) indicating that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
 
 > Practical significance:
 > We see that the probability of US voters have respecting police more comes up as 0.56 from the Sign Test. In our hypothesis we assumed it would be 0.5 reflecting that US voters have equal respect for the police and journalists. Thus, we see that the effect is not a very large one even though the p-value was very low to reflect a statistically significant result.
@@ -204,13 +204,13 @@ hist(democrats$age)
 qqnorm(democrats$age)
 ```
 
-> We will now plot and observe the skewness of age of democrats
+> We will observe the skewness of age of democrats
 
 ```{r}
 skewness(democrats$age)
 ```
 
-> The distribution for age of democrats is not far from normal, and with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+> The distribution for age of democrats is not far from normal, and with the number of observations being well above the thumb rule and the skewness being at at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
 
 > We will draw a histogram of ages of republicans to observe the distribution and any outliers
 
@@ -224,17 +224,19 @@ hist(republicans$age)
 qqnorm(republicans$age)
 ```
 
-> We will now plot and observe the skewness of age of republicans
+> We will observe the skewness of age of republicans
 
 ```{r}
 skewness(republicans$age)
 ```
 
-> The distribution for age of republicans is not far from normal, and with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+> The distribution for age of republicans is not far from normal either, and with the number of observations being well above the thumb rule and the skewness being at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
 
 > As discussed earlier the sample is iid drawn. However, we must be cautious in this set with the age as the respondents of lower ages might be more motivated (because of the money they can earn through it) to respond than those of higher ages. It will apply to both the sets - democrats and republicans. 
 
 ### Based on our EDA, selecting an appropriate hypothesis test
+
+>We will compare the means for the two samples. However, we should know that the mean alone cannot represent the enture distribution and answer our question. The conclusion thus, must be read with that in mind. 
 
 > 1. Since we are comparing means of two samples, it will be a two-sample test. 
 > 2. Since the variable we are comparing is a metric variable, parametric tests can be used.
@@ -246,7 +248,7 @@ skewness(republicans$age)
 > 2. Data is paired and drawn from i.i.d samples
 > 3. Distribution of the variable is (not too un-)normal
 
-> Since all the assumptions are satisfied, we will not go ahead with using the unpaired t-test.
+> Since all the assumptions are satisfied, we will go ahead with using the unpaired t-test.
 
 > The Null Hypothesis we will be testing is:
 > Republican voters are no more older or younger than Democratic voters
@@ -283,7 +285,8 @@ library(ggpubr)
 
 dems_reps <- usVoters %>%   filter(usVoters$pid1d==2 | usVoters$pid1d==3)
 dems_reps$party <- ifelse(dems_reps$pid1d==2,'democrat','republican')
-ggdensity(dems_reps, x = "age", fill = "party", palette = "jco")
+ggdensity(dems_reps, x = "age", fill = "party") +
+  scale_fill_manual(values=c("#222a84","#cf1c10"))
 
 ```
 
@@ -339,7 +342,7 @@ paste("Number of Entries for the variable muellerinv of independents:", length(i
 
 > This makes sense because the possible values the value can take are only 1 or 2. From just looking at the mean, it seems that there are more 1s than 2s. 
 
-> There are no Null Values for the variable russia16 or muellerinv of independents
+> There are no Null Values for the variable russia16 or muellerinv for independents
 
 ```{r}
 paste("Number of Null Values for the variable russia16 of independents:", length(which(is.na(independents$russia16))))
@@ -362,24 +365,20 @@ hist(independents$muellerinv)
 skewness(independents$muellerinv)
 ```
 
-> The distribution for muellerinv for independent voters seems symmetric about 4 and the skewness level is at a low (skewness is between -0.5 and 0.5,).
+> The distribution for muellerinv for independent voters seems symmetric about 4 and the skewness level is at a low level (skewness is between -0.5 and 0.5,).
 
 > As discussed earlier the sample is iid drawn.  
 
 > Since mullerinv seems a closer informative of our question and it has an ordinal level, we will use that for our analysis. 
 
 ### Based on our EDA, selecting an appropriate hypothesis test
-
-> 1. Since we are comparing two samples, it will be a two-sample test. 
-> 2. Since the variable we are comparing is an ordinal variable, parametric tests cannot be used.
-> 3. Since the two variables we are looking at are answered by the different people and there is no dependency we can take advantage of, we will do a unpaired test. 
-> With all these above reasons, we narrow our choice of test down to the Wilcoxon rank-sum test.
+cw our choice of test down to the Wilcoxon rank-sum test.
 
 > Assumptions to be able to use the Wilcoxon rank-sum test are:
 > 1. Ordinal variable
 > 2. Data is paired and drawn from i.i.d samples
 
-> Since all the assumptions are satisfied, we will not go ahead with using the Wilcoxon rank-sum test.
+> Since all the assumptions are satisfied, we will go ahead with using the Wilcoxon rank-sum test.
 
 > The Null Hypothesis we will be testing is:
 > Independent voters are no more likely to believe that the federal investigations of Russian election interference are baselesss than they are to believe that the federal investigations of Russian election interference are not baseless
@@ -511,7 +510,7 @@ skewness(increased_voters$geafraid)
 > 1. Variables represented are of ordnial Scale
 > 2. Data is paired and drawn from i.i.d samples
 
-> Since both the assumptions are satisfied, we will not go ahead with using the sign test.
+> Since both the assumptions are satisfied, we will go ahead with using the sign test.
 
 > The Null Hypothesis we will be testing is:
 > Anger is no more or less effective than fear at driving increases in voter turnout from 2016 to 2018
