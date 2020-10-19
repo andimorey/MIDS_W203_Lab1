@@ -40,7 +40,6 @@ A = read.csv("anes_pilot_2018.csv")
 
 > For our analysis, we will only consider the population that have value 1, 2, or 3 for the variable 'turnout18' to take the conserative approach in considering US voters.
 
-
 > Concerns or Gaps:
 
 > 1. The data collected is for rating police and journalists in general, not particularly based on respect. Inferring respect from a total rating will not give us accurate conclusions to draw.
@@ -50,7 +49,7 @@ A = read.csv("anes_pilot_2018.csv")
 
 > Variables: ftpolice, ftjournal
 
-> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a Likert scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. However, t
+> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a Likert scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. We cannot however, apply any arithmetic operaters (like +, -, /) to such variables.
          
 > Number of Entries 
 
@@ -78,33 +77,32 @@ paste("Number of Null Values for ftjournal:", length(which(is.na(usVoters$ftjour
 paste("Number of Duplicate Values for the dataset usVoters:", length(which(duplicated(usVoters))))
 ```
 
-> Will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
+> [ATTENTION!!] Will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
 
 ```{r}
 hist(usVoters$ftpolice)
 ```
 
-> We will now plot and observe the skewness of ftpolice variable
+> We will now observe the skewness of ftpolice variable
 
 ```{r}
 library(e1071)  
 skewness(usVoters$ftpolice)
 ```
 
-> The distribution for ftpolice is not normal, however with the number of observations being well above the thumb rule and the skewness is at a moderate level (skewness is between -1 and -0.5 or between 0.5 and 1), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+> The distribution for ftpolice seems a little skewed towards the higher end, but the skewness level is moderate (skewness is between -1 and -0.5 or between 0.5 and 1).
 
 ```{r}
 hist(usVoters$ftjournal)
 ```
 
-> We will now plot and observe the skewness of ftpolice variable
+> We will observe the skewness of ftpolice variable
 
 ```{r}
-library(e1071)  
 skewness(usVoters$ftjournal)
 ```
 
-> The distribution for ftjournal is not normal, however with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5,), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+> The distribution for ftjournal is lesser skewed than ftpolice and the skewness level is at a low (skewness is between -0.5 and 0.5,).
 
 > We will now observe the variable to see if it is identically and independently distributed (iid)
 
@@ -112,7 +110,7 @@ skewness(usVoters$ftjournal)
 
 ### Based on our EDA, selecting an appropriate hypothesis test
 
-> 1. Since we are comparing means of two samples, it will be a two-sample test. 
+> 1. Since we are comparing two samples, it will be a two-sample test. 
 > 2. Since the variables are of ordinal scale, parametric tests cannot be used.
 > 3. Since the two variables we are looking at are answered by the same person, there is enough dependence that we can take advantage of if we do a paired test. 
 > With all these above reasons, we narrow our choice of test down to Sign Test.
@@ -121,13 +119,15 @@ skewness(usVoters$ftjournal)
 > 1. Variables represented are of ordnial Scale
 > 2. Data is paired and drawn from i.i.d samples
 
-> Since both the assumptions are satisfied, we will not go ahead with using the sign test.
+> Since both the assumptions are satisfied, we will go ahead with using the sign test.
 
 > The Null Hypothesis we will be testing is:
 > US voters have equal respect for the police and journalists
 
-> We will do a two-tailed tests since we are only interested in the alternative hypothesis:
+> We will do a two-tailed test since we are only interested in the alternative hypothesis:
 > US voters do not have equal respect for the police and journalists
+
+> We will consider the significance level of 0.01 since we are looking at a large number of observations. We understand that with greater number of observations, statistical significance gets easier to achieve for small effects, so we are considering 0.01 and not 0.05 as our significance level for this test.
 
 ### Conducting the chosen test
 
@@ -137,9 +137,9 @@ trials = sum( usVoters$ftjournal < usVoters$ftpolice | usVoters$ftjournal > usVo
 binom.test(more_police , trials)
 ```
 
-> The p-value being well under 0.01 (statistical significance levels generally acceptable) indicating that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
+> The p-value being well under 0.01 (statistical significance we decided to consider) indicating that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
 
->To now see the statistical significance:
+> Practical significance:
 > We see that the probability of US voters have respecting police more comes up as 0.56 from the Sign Test. In our hypothesis we assumed it would be 0.5 reflecting that US voters have equal respect for the police and journalists. Thus, we see that the effect is not a very large one even though the p-value was very low to reflect a statistically significant result.
 
 
@@ -159,7 +159,7 @@ binom.test(more_police , trials)
 
 > There is another variable 'pid7x' which is a part of YouGov profile survey data that contains this affiliation. However, since these data were collected on previously-completed questionnaires, we identify the value in 'pid1d' being more recent and therefore will use that for the analysis our question. 
 
-> For the age, we can use the 'birthyr' variablew that is captured as a part of the survey, subtract that from the current year and get age. 
+> For the age, we can use the 'birthyr' variable that is captured as a part of the survey, subtract that from the current year and get age. 
 
 ### Exploratory data analysis (EDA) of the relevant variables
 
@@ -170,11 +170,10 @@ binom.test(more_police , trials)
 > Number of Entries 
 
 ```{r}
-library(tidyverse)
 currentYr <- lubridate::isoyear(Sys.Date())
 usVoters$age <- currentYr-usVoters$birthyr
-democrats <- usVoters  %>% filter(usVoters$pid1d==2)
-republicans <- usVoters  %>% filter(usVoters$pid1d==3)
+democrats <- usVoters  %>% filter(usVoters$pid1d==1)
+republicans <- usVoters  %>% filter(usVoters$pid1d==2)
 
 paste("Number of Entries for age of democrats:", length(democrats$age))
 paste("Summary for age of democrats: ")
@@ -205,14 +204,13 @@ hist(democrats$age)
 qqnorm(democrats$age)
 ```
 
-> We will now plot and observe the skewness of age of democrats
+> We will observe the skewness of age of democrats
 
 ```{r}
-library(e1071)  
 skewness(democrats$age)
 ```
 
-> The distribution for age of democrats is not far from normal, and with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+> The distribution for age of democrats is not far from normal, and with the number of observations being well above the thumb rule and the skewness being at at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
 
 > We will draw a histogram of ages of republicans to observe the distribution and any outliers
 
@@ -226,18 +224,19 @@ hist(republicans$age)
 qqnorm(republicans$age)
 ```
 
-> We will now plot and observe the skewness of age of republicans
+> We will observe the skewness of age of republicans
 
 ```{r}
-library(e1071)  
 skewness(republicans$age)
 ```
 
-> The distribution for age of republicans is not far from normal, and with the number of observations being well above the thumb rule and the skewness is at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+> The distribution for age of republicans is not far from normal either, and with the number of observations being well above the thumb rule and the skewness being at a low level (skewness is between -0.5 and 0.5), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
 
 > As discussed earlier the sample is iid drawn. However, we must be cautious in this set with the age as the respondents of lower ages might be more motivated (because of the money they can earn through it) to respond than those of higher ages. It will apply to both the sets - democrats and republicans. 
 
 ### Based on our EDA, selecting an appropriate hypothesis test
+
+>We will compare the means for the two samples. However, we should know that the mean alone cannot represent the enture distribution and answer our question. The conclusion thus, must be read with that in mind. 
 
 > 1. Since we are comparing means of two samples, it will be a two-sample test. 
 > 2. Since the variable we are comparing is a metric variable, parametric tests can be used.
@@ -249,7 +248,7 @@ skewness(republicans$age)
 > 2. Data is paired and drawn from i.i.d samples
 > 3. Distribution of the variable is (not too un-)normal
 
-> Since all the assumptions are satisfied, we will not go ahead with using the signunpaired t-test.
+> Since all the assumptions are satisfied, we will go ahead with using the unpaired t-test.
 
 > The Null Hypothesis we will be testing is:
 > Republican voters are no more older or younger than Democratic voters
@@ -257,15 +256,17 @@ skewness(republicans$age)
 > We will do a two-tailed tests since we are only interested in the alternative hypothesis:
 > Republican voters are either older or younger than Democratic voters
 
+> We will consider the significance level of 0.05 since we are looking at a only a few hundred observations. Since the number of observations is not very large here, we will consider rejecting the null hypothesis if the p-value is <0.05.
+
 ### Conducting the chosen test
 
 ```{r}
 t.test(democrats$age, republicans$age, paired=F)
 ```
 
-> Since the p-value is greater than 0.05 (therefore, also greater than 0.01), the test is not statistically significant to reject the null hypothesis
+> Since the p-value is less than 0.05, the test is statistically significant to reject the null hypothesis per the significance level we considered before doing the test.
 
-> Practical Significance:
+> Practical significance:
 
 ```{r}
 meanage_dem = mean(democrats$age)
@@ -277,46 +278,260 @@ sdage_rep = sd(republicans$age)
 paste("Mean of Age of Republicans: ", meanage_rep, " Sampling Standard Deviation in Age Republicans: ", sdage_rep)
 ```
 
-> The difference in means of ages of Democrats and Republicans is only 0.82 with a small difference in sampling standard deviations too (0.3). And, we can from the graph below, a substancial area overlapping, so there is no practical significance to reject the null hypothesis either. 
+> The difference in means of ages of Democrats and Republicans is 3 with a small difference in sampling standard deviations too (0.3). However, from the graph below of the sampling distribution of the ages of democrats and republicans, we see a substancial area overlapping, so there is practical significance to reject the null hypothesis is not very high.  
 
 ```{r}
 library(ggpubr)
 
 dems_reps <- usVoters %>%   filter(usVoters$pid1d==2 | usVoters$pid1d==3)
 dems_reps$party <- ifelse(dems_reps$pid1d==2,'democrat','republican')
-ggdensity(dems_reps, x = "age", fill = "party", palette = "jco")
+ggdensity(dems_reps, x = "age", fill = "party") +
+  scale_fill_manual(values=c("#222a84","#cf1c10"))
 
 ```
 
-
 ## Question 3: Do a majority of independent voters believe that the federal investigations of Russian election interference are baseless?
 
-### Introduce your topic briefly.  (5 points)
-Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+### Introducing the topic
 
-### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
-This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+> Concept: To measure voters' belief about whether federal investigations of Russian election interference are baseless or not, we would use a nominal variable with values indicating true or false. We will measure this for voters who identify their party inclination as independent.
 
-### Based on your EDA, select an appropriate hypothesis test.  (5 points)
-Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+> Operationalization: We will use the 'pid1d' variable that captures the answer to "Generally speaking, do you usually think of yourself as a Democrat, a Republican?" to see if a voter identifies as independent. As mentioned in the earlier question's analysis, this variable takes one of six values. Here, we will be interested in only one of them: 3 which indicates independent.
 
-### Conduct your test. (5 points)
-Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+> For the belief about whether federal investigations of Russian election interference are baseless or not, there are two closely associated variables we can use:
+> 1. 'russia16' which captures the answer to question "Do you think the Russian government probably interfered in the 2016 presidential?" 
+> 2. 'muellerinv' which captures the answer to question "Do you approve, disapprove, or neither approve nor disapprove of Robert Mueller’ [ATTENTION HERE!]"
 
+> The 'russia16' variable takes one of three values:
+> -7 No Answer
+> 1 Russia probably interfered
+> 2 This probably did not happen
+
+>While this variable does not capture the belief of the federal investigations being baseless or not, it is likely that if a voter things there was inteference (indicated by the variable 'russia16'), they will not find the investigations baseless and vice versa. 
+
+> The 'muellerinv' variable takes one of the following eight values:
+> -7 No Answer
+> 1 Approve extremely strongly
+> 2 Approve moderately strongly
+> 3 Approve slightly
+> 4 Neither approve nor disapprove
+> 5 Disapprove slightly
+> 6 Disapprove moderately strongly
+> 7 Disapprove extremely strongly
+
+> Concerns or Gaps:
+
+> 1. The data collected is for two questions that are not exactly what we are trying to analyze. They are the ones we think are closely related and informative about the variable we are trying to analyze.  
+> 2. Again, one person's interpretation of the Likert scale can be very different from another's. One person's 'Disapprove slightly' could be the same as another's 'Disapprove moderately strongly'. 
+
+### Exploratory data analysis (EDA) of the relevant variables
+
+> Variables: russia16, pid1d
+
+> Types: pid1d is a nominal level variable, however, we are only using that to get our sample of independent voters. russia16 is also a nominal level variable. muellerinv is an ordinal variable since the values can be ordered from the level of approval to the level of disapproval.
+         
+> Number of Entries 
+
+```{r}
+independents <- usVoters  %>% filter(usVoters$pid1d==3)
+
+paste("Number of Entries for the variable russia16 of independents:", length(independents$russia16))
+
+paste("Number of Entries for the variable muellerinv of independents:", length(independents$muellerinv))
+```
+
+> This makes sense because the possible values the value can take are only 1 or 2. From just looking at the mean, it seems that there are more 1s than 2s. 
+
+> There are no Null Values for the variable russia16 or muellerinv for independents
+
+```{r}
+paste("Number of Null Values for the variable russia16 of independents:", length(which(is.na(independents$russia16))))
+paste("Number of Null Values for the variable muellerinv of independents:", length(which(is.na(independents$muellerinv))))
+```
+
+> There are no duplicate rows in the dataset of US Voters as we had already established while answering research question 1
+
+> We will not evaluate the histogram or skewness of the russia16 variable for independent voters because it is a nominal variable and the histogram or skewness will not inform us much.
+
+> We will plot the histogram of muellerinv for independent voters to see it's distribution 
+
+```{r}
+hist(independents$muellerinv)
+```
+
+> We will observe the skewness of muellerinv of independent voters
+
+```{r}
+skewness(independents$muellerinv)
+```
+
+> The distribution for muellerinv for independent voters seems symmetric about 4 and the skewness level is at a low level (skewness is between -0.5 and 0.5,).
+
+> As discussed earlier the sample is iid drawn.  
+
+> Since mullerinv seems a closer informative of our question and it has an ordinal level, we will use that for our analysis. 
+
+### Based on our EDA, selecting an appropriate hypothesis test
+cw our choice of test down to the Wilcoxon rank-sum test.
+
+> Assumptions to be able to use the Wilcoxon rank-sum test are:
+> 1. Ordinal variable
+> 2. Data is paired and drawn from i.i.d samples
+
+> Since all the assumptions are satisfied, we will go ahead with using the Wilcoxon rank-sum test.
+
+> The Null Hypothesis we will be testing is:
+> Independent voters are no more likely to believe that the federal investigations of Russian election interference are baselesss than they are to believe that the federal investigations of Russian election interference are not baseless
+
+> We will do a two-tailed tests even though we are interested in whether a majority of independent voters believe that the federal investigations of Russian election interference are baseless because:
+> 1. We must choose what kind of test we are going to use before looking at the data. The use of one-tailed tests (which are lesser common) needs to be justified to large extents. We have to be cautious of the fact that it might not be widely accepted, for example, the audience might not believe that we started with a one-tail before looking at the data and think that we changed my test after running it once with two-tail and not getting a statistically significant result. Or the audience in general might not share the same opinion on my justifications for the one-tailed test.
+> 2. With the one-tailed test, it is easier to reject the null hypothesis given all of the rejection region is on one side -> it is therefore associated with more skepticism than a one-tailed test. 
+
+> We will consider the significance level of 0.05 since we are looking at a only a few hundred observations. Since the number of observations is not very large here, we will consider rejecting the null hypothesis if the p-value is <0.05.
+
+### Conducting the chosen test
+
+```{r}
+wilcox.test(independents$muellerinv)
+```
+
+> Since the p-value is less than 0.05, the test is statistically significant to reject the null hypothesis per the significance level we considered before doing the test.
+
+> Practical significance:
+
+```{r}
+num_ind = length(independents$muellerinv)
+paste("Number of independent voters: ",num_ind)
+approved <- independents %>% filter(independents$muellerinv<4 & independents$muellerinv!=-7)
+neutral <- independents %>% filter(independents$muellerinv==4)
+disapproved <- independents %>% filter(independents$muellerinv>4)
+
+paste("Ratio of independent voters in the sample who approve of the Mueller Investigation: ",length(approved$muellerinv)/num_ind)
+paste("Number of independent voters in the sample who were nuetral about of the Mueller Investigation: ",length(neutral$muellerinv)/num_ind)
+paste("Number of independent voters in the sample who disapprove of the Mueller Investigation: ",length(disapproved$muellerinv)/num_ind)
+```
+
+> This shows there is a higher ratio of independent voters who approve of the Mueller Investigation. We can deduce that they must think the federal investigations of Russian election interference were not baseless. Therefore, there is practical significanct effect we see as well. 
 
 ## Question 4: Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
 
-### Introduce your topic briefly.  (5 points)
-Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
+### Introducing the topic
 
-### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
-This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+> Concept: To measure the increase in turnout from 2016 to 2018, we the population of people who did not turnout in 2016 but did in 2018 since they will make the increase. We can also consider those who got eligible for voting in 2018 by their birth year. 
+To gather which of the emotions, anger or fear, were driving factors for the increased turnout, we would have questions asking the respondents whether any or both of those feelings drove them to turnout to vote in 2018 when they did not in 2016. 
 
-### Based on your EDA, select an appropriate hypothesis test.  (5 points)
-Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+> Operationalization: Since we are concerned with the increase driven by anger or fear, we can safely discount the respondents who became eligible to vote for the 2018 election and were not eligble for the 2016 election. 
+> The variables 'turnout16' and 'turnout18' which capture answers to "In 2016, the major candidates for president were Donald Trump for the Republicans and Hillary Clinton for the Democrats. In that election, did you definitely vote, definitely not vote, or are you not completely sure whether you voted?" and "In the election held on November 6, did you definitely vote in person on election day, vote in person before Nov 6, vote by mail, did you definitely not vote, or are you not completely sure whether you voted in that election?" respectively are what we can use to build the segment for increase as discussed in the concept.
+> We can also include those respondents who mentioned they probably did not vote in 2016 reflected the variable 'turnout16b' which captures the answer to "Do you think you probably voted or probably did not vote?" And for the 2018 election, we can include those you mentioned probably did vote in 2018 reflected in the variable 'turnout18ns' which captures the answer to "If you had to guess, would you say that you probably did vote in the election held on
+November 6, or probably did not vote in that election?"
 
-### Conduct your test. (5 points)
-Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
+> There are two variables captured in the ANES 2018 Pilot Study that represent "Generally speaking, how do you feel about the way things are going in the country these days?" with respect to anger and fear. 'geangry' captures "How angry do you feel?" and 'geafraid' captures "How afraid do you feel?". The variables take one of the following six values depending on how intensely they feel the emotion being represented:
+> -7 No Answer
+> 1 Not at all
+> 2 A little
+> 3 Somewhat
+> 4 Very
+> 5 Extremely
+
+>Since we are interested in which of the two emotions were more effective in driving turnout, we will select the sample that provided an answer for both the variables. 
+
+> Concerns or Gaps:
+
+> 1. The data collected is for the feeling of anger and fear in general, not particularly whether it is effective in driving turnout. The question was not whether anger or fear drove the candidate to turnout in 2018 when they did not in 2016. 
+> 2. One person's interpretation of the Likert scale can be very different from another's, so if one person could represent their immense fear as 'very', represented by 4 on the scale, another person could represent the same as 'extremely', represented by 5 on the scale. Similarly for anger as well. 
+
+### Exploratory data analysis (EDA) of the relevant variables
+
+> Variables: turnout16, turnout16b, turnout18, turnout18ns, geangry, geafraid
+
+> Types: turnout16, turnout16b, turnout18, turnout18ns are all nominal variables, but we are only using that to get our sample. geangry and geafraid are ordinal variables since can be ordered from the least strong feeling of the emotion to most strong. 
+
+> Number of Entries 
+
+```{r}
+increased_voters <- A  %>% filter((A$turnout18<4 | (A$turnout18==4 & A$turnout18ns==1)) & (A$turnout16==2 | (A$turnout16==2 & A$turnout16b==2)) & (A$geangry!=-7 & A$geafraid!=-7))
+
+paste("Number of Entries for the variable geangry of increased_voters:", length(increased_voters$geangry))
+paste("Summary for geangry: ")
+summary(increased_voters$geangry)
+
+paste("Number of Entries for the variable geafraid of increased_voters:", length(increased_voters$geafraid))
+paste("Summary for geafraid: ")
+summary(increased_voters$geafraid)
+```
+
+> There are no Null Values for geangry and geafraid
+
+```{r}
+paste("Number of Null Values for geangry:", length(which(is.na(increased_voters$geangry))))
+paste("Number of Null Values for geafraid:", length(which(is.na(increased_voters$geafraid))))
+```
+
+> There are no duplicate rows in the dataset of US Voters as we had already established while answering research question 1
+
+> Will draw a histogram of both geangry to observe the distribution and any outliers
+
+```{r}
+hist(increased_voters$geangry)
+```
+
+> We will now observe the skewness of geangry variable
+
+```{r} 
+skewness(increased_voters$geangry)
+```
+
+> We see a symmetry about the median (3) in the distribution for geangry and the skewness level is also low (skewness is between -1 and -0.5 or between 0.5 and 1).
+
+> Will draw a histogram of both geafraid to observe the distribution and any outliers
+
+```{r}
+hist(increased_voters$geafraid)
+```
+
+> We will now observe the skewness of geafraid variable
+
+```{r} 
+skewness(increased_voters$geafraid)
+```
+
+> Again, we see a symmetry about the median (3) in the distribution for geafraid and the skewness level is also low (skewness is between -1 and -0.5 or between 0.5 and 1).
+
+> As discussed earlier the sample is iid drawn. 
+
+### Based on our EDA, selecting an appropriate hypothesis test
+
+> 1. Since we are comparing two samples, it will be a two-sample test. 
+> 2. Since the variables are of ordinal scale, parametric tests cannot be used.
+> 3. Since the two variables we are looking at are answered by the same person, there is enough dependence that we can take advantage of if we do a paired test. 
+> With all these above reasons, we narrow our choice of test down to Sign Test.
+
+> Assumptions to be able to use the Sign Test are:
+> 1. Variables represented are of ordnial Scale
+> 2. Data is paired and drawn from i.i.d samples
+
+> Since both the assumptions are satisfied, we will go ahead with using the sign test.
+
+> The Null Hypothesis we will be testing is:
+> Anger is no more or less effective than fear at driving increases in voter turnout from 2016 to 2018
+
+> We will do a two-tailed test since we are only interested in the alternative hypothesis:
+> There is a difference in the effectiveness of anger and fear at driving increases in voter turnout from 2016 to 2018
+
+> We will consider the significance level of 0.05 since we are looking at a only a few hundred observations. Since the number of observations is not very large here, we will consider rejecting the null hypothesis if the p-value is <0.05.
+
+### Conducting the chosen test
+
+```{r}
+more_anger = sum( increased_voters$geafraid < increased_voters$geangry)
+trials = sum( increased_voters$geafraid < increased_voters$geangry | increased_voters$geafraid > increased_voters$geangry)
+binom.test(more_anger , trials)
+```
+
+> The p-value is greater than 0.05 indicating that we cannot reject the null hypothesis that Anger is no more or less effective than fear at driving increases in voter turnout from 2016 to 2018.
+
+> Practical significance:
+> We see that the probability of increased voters having anger be more represented than fear comes up as 0.49 from the Sign Test. This also indicates that the practical significance of the effect is very low.
 
 
 ## Question 5: Select a fifth question that you believe is important for understanding the behavior of voters
