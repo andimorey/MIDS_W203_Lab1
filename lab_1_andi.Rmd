@@ -24,12 +24,11 @@ The American National Election Studies (ANES) conducts surveys of voters in the 
 
 3. Do a majority of independent voters believe that the federal investigations of Russian election interference are baseless?
 
-4. Was anger or fear more effective at driving increases in voter turnout
-from 2016 to 2018?
+4. Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
 
 5. (Student Choice)
 
-## General Study Comments (applicapble for all questions)
+## General Study Comments (applicable for all questions)
 
 Since all questions draw from the same study sample, it is useful to state comments here that we can refer to for all questions.  For almost any test we run, we will need to determine if the data is i.i.d. and if the respondents to the survey accurately represent the average U.S. voter that we can generalize accordingly. 
 
@@ -37,9 +36,11 @@ _Independence_ - Unless multiple people in the same locale, same family, or same
 
 _Identically Distributed_ - Once on person has taken the survey, they cannot take the survey again; so the distribution for the next "draw" is changed.  But the change in the population distribution for the next raw is so small, we can safely ignore this effect.
 
-_Generalizability_ - Because this is a modern, paid, opt-in survey, the sample data will only include individuals who have the propensity or financial motivation to complete the survey.  However, the financial impact is small, 21-50 cents for this 30 min survey (see the ANES User Guide Code Book).  In addition, the survey provided weights in which the survey recommends to use when making inferences to the target population of U.S. adult citizens.
+_Generalizability_ - Because this is a modern, paid, opt-in survey, the sample data will only include individuals who have the propensity or financial motivation to complete the survey.  However, the financial impact is small, 21-50 cents for this 30 minute survey (see the ANES User Guide Code Book).  In addition, the survey provided weights in which the survey recommends to use when making inferences to the target population of U.S. adult citizens.
 
-Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern not mentioned -- the data did not account for people who are ineligable to vote to use a felony).
+Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern not mentioned -- the data did not account for people who are ineligable to vote due to a felony).
+
+_Confidence Interval_ - All tests will use a 95% confidence as standard practice.
 
 \newpage
 
@@ -99,19 +100,20 @@ The survey itself asks its respondents many questions surrounding their politica
 
 #### Exploratory Data Analysis
 
-First, lets determine if we have enough Democrats and Replublicans.  We will have to awknowlege that using only reponses 1 or 2 for $pid1d$ and $pid2d$ will remove non-responses, Indpendants, and "others" from the analysis.
+First, lets determine if we have enough Democrats and Replublicans.  We will have to awknowlege that using only reponses 1 or 2 for $pid1d$ and $pid2d$ will remove non-responses, Indpendants, and "others" from the analysis.  We will also have to confirm these individuals are voters.
 
 ```{r}
-Age_and_Party <-select(A, c("pid1d", "pid2d", "birthyr"))
+Age_and_Party <-select(A, c("pid1d", "pid1r", "likelyvoter", "birthyr"))
 Age_and_Party$Party <- 
-  ifelse((Age_and_Party$pid1d==2 | Age_and_Party$pid2d == 2), 0,
-  ifelse((Age_and_Party$pid1d==1 | Age_and_Party$pid1d == 1), 1, -1)) 
+  ifelse((Age_and_Party$pid1d==2 | Age_and_Party$pid1r == 2), 0,
+  ifelse((Age_and_Party$pid1d==1 | Age_and_Party$pid1r == 1), 1, -1)) 
 Age_and_Party<-filter(Age_and_Party, Party >= 0)
+Age_and_Party<-filter(Age_and_Party, likelyvoter >= 1)
 paste("Number of Republicans: ", sum(Age_and_Party$Party==0))
 paste("Number of Democrats:   ", sum(Age_and_Party$Party==1))
 ```
 
-We have 758 people who claimed they are part of either party, Democrates and Republicans.  Now we need to see if the sample distribution of their ages are normal enough to use CLT.
+We have 1228 people who claimed they are part of either party, Democrates and Republicans.  Now we need to see if the sample distribution of their ages are normal enough to use CLT.
 
 ```{r, fig.width=8, fig.height=4}
 hist(Age_and_Party$birthyr, breaks = 50,
@@ -119,7 +121,7 @@ hist(Age_and_Party$birthyr, breaks = 50,
      xlab = "Year")
 ```
 
-The historgram of ages has a somewhat bi-modal distribution however, with 758 reponses, we can rely on CLT.  There are 2 appearances of -7 for the second variable, but since there's only 2 it shouldn't affect the data.
+The historgram of ages has a somewhat bimodal distribution however, with 1228 reponses, we can rely on CLT. 
 
 #### The Test
 Since our sample's political id variable is metric (0 or 1) and birthyr is metric, i.i.d (see general assumptions on page 1) and the data cannot be paired, we would argue that using an unpaired t-test.  The _Null Hypothsis_ is that the difference ages between Democrats and Republicans is equal to 0.
@@ -127,4 +129,77 @@ $$ \mu_{D\_age} - \mu_{R\_age} = 0 $$
 ```{r}
 t.test(Age_and_Party$birthyr~Age_and_Party$Party)
 ```
-Here we do not have a statistically significant test is the p-value being near 0.3.  We fail to reject the null hypthosis that there is an age difference between Democrats and Republicans.
+Here we have a statistically significant test is the p-value being less than 0.05.  We can reject the null hypthosis that there is an no age difference between Democrats and Republicans voters.  Republican voters are, on average, 3 years older than Democrat voters since they have a mean of a birth year of 1962 and the Democrat voters have a birth year mean of 1965.
+
+\newpage
+### 3. Do a majority of independent voters believe that the federal investigations of Russian election interference are baseless?
+#### Conceptualize
+The concept here is to understand if indpendent voters support the Russian election investigations.
+
+#### Operationalize
+As with the second quesiton, we can use $pid1d$ and $pid2d$ to determine if a voter self-identifies as an independant voter.  There are a few ways we can operationalize their belief in the Russian Election Interference. The variable $russia16$ asks - "Do you think the Russian government probably interfered in the 2016 presidentia election to try to help Donald Trump win, or do you think this probably did not happen?" The variable $muellerinv$ asks "Do you approve, disapprove, or neither approve nor disapprove of Robert Mueller’s investigation of Russian interference in the 2016 election?"  Both of these can get to the question of if a voter things the investigation is baseless. The first is a simple "yes" or "no" type question, making for an easier type of analysis.  Let's try this one first...
+
+
+#### Exploratory Data Analysis
+
+First, lets determine if we have enough  Independant voters.  We will have to awknowlege that using only reponse selection 3 for $pid1d$ and $pid2d$ will remove Democrats, Republicans, and "others" from the analysis.  We will also have to confirm these individuals are voters.
+
+```{r}
+Independant_Voters <- select(A, c("pid1d", "pid1r", "likelyvoter", "russia16"))
+Independant_Voters <- filter(Independant_Voters, pid1r == 3 | pid1d == 3)
+paste("Number of Independants: ", nrow(Independant_Voters))
+paste("Number of nonreponse to Russia quesiton", sum(Independant_Voters$russia16<0))
+```
+
+We have 767 people who claimed they are Independant AND Voted AND conviently also gave an answer to the Russia question.
+
+Since our sample's variable is metric (1-believe or 2-disbelieve), i.i.d (see general assumptions on page 1) and the data cannot be paired, we would argue that using a one-sample t-test.  The _Null Hypothsis_ is that the 50% of the respondants woudld pick 1 and 50% woudl pick 2, making the mean 1.5.
+$$ \mu =1.5 $$
+```{r}
+t.test(Independant_Voters$russia16, mu=1.5)
+r = (sum(Independant_Voters$russia16==1) - sum(Independant_Voters$russia16==2))/(nrow(Independant_Voters))
+paste("r value: ", r)
+```
+Here we have a statistically significant test is the p-value being less than 0.05.  We can reject the null hypthosis that the question was answered 50% one way and not the other.  We can accept the alternative hypothesis that it mu is not 1.5.  More people believe the invetigation was warrented than not but not by much, as the r-value (correlation) is very low at 9.7%.
+
+\newpage
+### 3. Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
+#### Conceptualize
+The concept here is to understand what drove increases in voter turnout from 2016 to 2018 in terms of just anger or fear. 
+
+#### Operationalize
+We have data on who voted in 2016 in $turnout16$ and who voted in 2018.  Our population that we are curious about are those who did NOT vote (or couldn't remember if they did) in 2016 but who are confident that they did vote in 2018.  The survey also collected data on those voters on how they are generally feeling.  Most emotions were listed, inlcuding anger and fear.  This variable $geangry$ and $geafraid$ are collected on a scale from 1-5, ranging from Not at all [1], A little [2] Somewhat [3] Very [4] and Extremely [5].  We can operationalize those who are angry or scared as signifiying the said Very or Extermely for the answer to this question.
+
+
+#### Exploratory Data Analysis
+
+First, lets determine if we have enough voters who did not, or were not sure they voted in 2016 but then did in 2018. 
+
+```{r}
+Non2016Voters <- select(A, c("likelyvoter", "turnout16", "geangry", "geafraid"))
+Non2016Voters <- filter(Non2016Voters, turnout16 >= 2)
+paste("Number of Independants: ", nrow(Non2016Voters))
+```
+
+We have 659 people who claimed they Definitely did not vote or not compeltely sure they voted in 2016, to being certain they voted in 2018.
+
+Now, we need to see the distribution of the general emotion rankings.
+
+```{r, fig.width=8, fig.height=4}
+hist(Non2016Voters$geangry, main = "Histogram of Anger", xlab = "Setimate rating")
+hist(Non2016Voters$geafraid, main = "Histogram of Anger", xlab = "Setimate rating")
+```
+
+
+```{r}
+Non2016Voters$angry <- ifelse(Non2016Voters$geangry >= 4, 1, 0)
+Non2016Voters$afraid <- ifelse(Non2016Voters$geafraid >= 4, 1, 0)
+```
+
+```{r}
+more_anger = sum( Non2016Voters$afraid < Non2016Voters$angry)
+trials = sum( Non2016Voters$afraid < Non2016Voters$angry | Non2016Voters$afraid > Non2016Voters$angry)
+binom.test(more_anger , trials)
+```
+
+No difference between fear or anger.
