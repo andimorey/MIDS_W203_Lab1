@@ -26,7 +26,7 @@ The American National Election Studies (ANES) conducts surveys of voters in the 
 
 4. Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
 
-5. (Student Choice)
+5. (Student Choice) Do Hillary Clinton voters and Trump voters view the US income gap differently?
 
 ## General Study Comments (applicable for all questions)
 
@@ -38,7 +38,7 @@ _Identically Distributed_ - Once on person has taken the survey, they cannot tak
 
 _Generalizability_ - Because this is a modern, paid, opt-in survey, the sample data will only include individuals who have the propensity or financial motivation to complete the survey.  However, the financial impact is small, 21-50 cents for this 30 minute survey (see the ANES User Guide Code Book).  In addition, the survey provided weights in which the survey recommends to use when making inferences to the target population of U.S. adult citizens.
 
-Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern not mentioned -- the data did not account for people who are ineligable to vote due to a felony).
+Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern/gap not mentioned -- the data did not account for people who are ineligable to vote due to a felony).
 
 _Confidence Interval_ - All tests will use a 95% confidence as standard practice.
 
@@ -46,10 +46,14 @@ _Voting Population_ - Nearly all the question asks about voters.  The survey pro
 
 Let's look at how many observations are in those categories:
 ```{r}
+paste("Number of NA in turnout18: ", length(which(is.na(A$turnout18))))
+paste("Number of NA in turnout18ns: ", length(which(is.na(A$turnout18ns))))
 paste("Definitely Voted: ", sum(A$turnout18 <= 3))
 paste("Not completely sure or Probably did vote: ", sum(A$turnout18 == 5 & A$turnout18ns == 1))
+paste("Number of Duplicate Voters for the main dataset: ", length(which(duplicated(A))))
 A$voted2018 <- ifelse((A$turnout18<=3), 1, 0)
 ```
 
 About 1% not sure or "probably" voted. We argue that because is a fairly small number and being uncertain about having voted in an election that has just taken place can be reasonably viewed as grounds for exclusion from the population of US 2018 voters.  We will use this population for all questions in this lab because all questions ask specfically about "voters".
 
+We also did a check to confirm there are no duplicate rows in the set of voted18.  If there are duplicates, we will need to filter them out, in this case where were none so we will not need to worry about this for the rest of the lab.
