@@ -1,7 +1,7 @@
 ---
 title: 'Lab 1: Comparing Means'
 author: "Sristhi Mehra, David Djambazov, and Andi Morey Peterson"
-date: "10/17/2020"
+date: "10/22/2020"
 output: pdf_document
 ---
 
@@ -42,6 +42,9 @@ Given these, we can assume the iid assumption is valid and for results we worry 
 
 _Confidence Interval_ - All tests will use a 95% confidence as standard practice.
 
+_Voting Population_ - Nearly all the question asks about voters.  The survey provides a few sample questions about the respondent to determine if that respondent was actually a voter. Variables $turnout18$ and $turnout18ns$ can be used to determine if they were a voter. 
+
+
 \newpage
 
 ### 1. Do US voters have more respect for the police or for journalists?
@@ -51,7 +54,7 @@ The concept is in the question itself.  Do US voters prefer police over journali
 #### Operationalize
 We could have directly asked the survey respondents to pick on or the other, but the survey didn't do this.  Rather is other data we can use to operationalize this question.  First there is the rating question in which respondents were asked to rate different groups such as police and journalists. “How do you rate the police?” and “How do you rate journalists?” These results reside in the variables $ftpolice$ and $ftjournal$.  There is also the question "How concerned are you about violence against people who work in the news media?" However, since there is not a corresponding question about police, we cannot use that in any two-sample test.
 
-In addition to this, the question asks about voters.  The survey provides a few sample questions about the respondent to determine if that respondent was a voter. Variables $turnout18$ and $turnout18ns$ can be used to determine if they were a voter.
+
 
 #### Exploratory Data Analysis
 
@@ -153,8 +156,8 @@ paste("Number of nonreponse to Russia quesiton", sum(Independant_Voters$russia16
 
 We have 767 people who claimed they are Independant AND Voted AND conviently also gave an answer to the Russia question.
 
-Since our sample's variable is metric (1-believe or 2-disbelieve), i.i.d (see general assumptions on page 1) and the data cannot be paired, we would argue that using a one-sample t-test.  The _Null Hypothsis_ is that the 50% of the respondants woudld pick 1 and 50% woudl pick 2, making the mean 1.5.
-$$ \mu =1.5 $$
+Since our sample's variable is metric (1-believe or 2-disbelieve), i.i.d (see general assumptions on page 1) and the data cannot be paired, we would argue that using a one-sample t-test.  The _Null Hypothsis_ is that the 50% of the respondants woudld pick 1 and 50% would pick 2, making the mean 1.5.
+$$ \mu_0 = 1.5 $$
 ```{r}
 t.test(Independant_Voters$russia16, mu=1.5)
 r = (sum(Independant_Voters$russia16==1) - sum(Independant_Voters$russia16==2))/(nrow(Independant_Voters))
@@ -176,12 +179,14 @@ We have data on who voted in 2016 in $turnout16$ and who voted in 2018.  Our pop
 First, lets determine if we have enough voters who did not, or were not sure they voted in 2016 but then did in 2018. 
 
 ```{r}
-Non2016Voters <- select(A, c("likelyvoter", "turnout16", "geangry", "geafraid"))
+Non2016Voters <- select(A, c("likelyvoter", "turnout16", "geangry", "birthyr", "geafraid"))
 Non2016Voters <- filter(Non2016Voters, turnout16 >= 2)
-paste("Number of Independants: ", nrow(Non2016Voters))
+Non2016Voters <- filter(Non2016Voters, likelyvoter >= 1)
+Non2016Voters <- filter(Non2016Voters, birthyr < 2000)
+paste("Number of Non 2016 Voters: ", nrow(Non2016Voters))
 ```
 
-We have 659 people who claimed they Definitely did not vote or not compeltely sure they voted in 2016, to being certain they voted in 2018.
+We have 116 people who claimed they Definitely did not vote or not compeltely sure they voted in 2016, to being certain they voted in 2018.
 
 Now, we need to see the distribution of the general emotion rankings.
 
