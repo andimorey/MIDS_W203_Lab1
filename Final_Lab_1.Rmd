@@ -38,14 +38,14 @@ _Identically Distributed_ - Once on person has taken the survey, they cannot tak
 
 _Generalizability_ - Because this is a modern, paid, opt-in survey, the sample data will only include individuals who have the propensity or financial motivation to complete the survey.  However, the financial impact is small, 21-50 cents for this 30 minute survey (see the ANES User Guide Code Book).  In addition, the survey provided weights in which the survey recommends to use when making inferences to the target population of U.S. adult citizens.
 
-Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern/gap not mentioned -- the data did not account for people who are ineligible to vote due to a felony).
+Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern/gap worth mentioning -- the data did not account for people who are ineligible to vote due to a felony.  Perhaps the survey rid of these samples prior to publishing but it is not mentioned in the materials.  These people didn't vote not because of anger or fear, but because they were unable to do so).
 
 _Confidence Interval_ - All tests will use a 95% confidence as standard practice.
 
 _Voting Population_ - Nearly all the question asks about voters.  The survey provides a few sample questions about the respondent to determine if that respondent was actually a voter. Variables $turnout18$ and $turnout18ns$ can be used to determine if they were a voter. For our analysis, we will only consider the population that have value 1, 2, or 3 for the variable $turnout18$ to take the conservative approach in considering US voters.
 
 Let's look at how many observations are in those categories:
-```{r}
+```{r Voter Turnout}
 paste("Number of NA in turnout18: ", length(which(is.na(A$turnout18))))
 paste("Number of NA in turnout18ns: ", length(which(is.na(A$turnout18ns))))
 paste("Definitely Voted: ", sum(A$turnout18 <= 3))
@@ -58,9 +58,7 @@ About 1% not sure or "probably" voted. We argue that because is a fairly small n
 
 We also did a check to confirm there are no duplicate rows in the set of voted18.  If there are duplicates, we will need to filter them out, in this case where were none so we will not need to worry about this for the rest of the lab.
 
-```{r}
-paste("Number of Duplicate Values for the dataset:", length(which(duplicated(A))))
-```
+\newpage
 
 # Research Questions
 
@@ -161,6 +159,87 @@ binom.test(more_police , trials)
 > Practical significance:
 > The number of US voters in this sample who respect police more divided by the total number pairs of respecting either police or journalists more is 0.56. This is instead of the 0.5 we assumed for our null hypothesis, which would have reflected that US voters have equal respect for the police and journalists.
 
+
+\newpage
+## Question 2: Are Republican voters older or younger than Democratic voters?
+
+### Introducing the topic
+
+#### Conceptualize
+Here we are trying to understand if there is an age component in the differences in political parties.
+
+#### Operationalize
+The survey itself asks its respondents many questions surrounding their political identity. We have several variables in which we can consider to use to define political identity. First, there is $pid1d$ / $pid1r$ which asks "Generally speaking, do you usually think of yourself as a Democrat, a Republican, an Independent, or what?".  Each of these reverse the order of which is asked first.  There are follow up questions with these to try and figure out which way the respondent leans or how strongly $pidstr$ and $pidlean$.  There is also $pid7x$ that also asks on a Likert-type scale. Since we are asking just ages of Republican vs Democrat and not HOW far they lean or how STRONGLY they feel that way, we can use the data from $pid1d$/$pid2d$ (jointly, since 50% were asked one way and 50% the other).  We will disregard WHO they voted for, as the person they voted for doesn't represent which party they are affiliated with.  For age, we can simply use $birthyr$ and know that we will only have a year granularity for our data (rather than month and day).
+
+#### Exploratory Data Analysis
+
+Variables: $pid1d$, $pid1r$, $birthyr$
+
+Types: Both $pid1d$ and $pid1r$ are ordinal type variables. However, since we are only limiting the sample to Republicans(0) and Democrats(1) which will make our new variable "Party" as nominal or metric.  First, lets determine if we have enough Democrats and Republicans.  We will have to acknowledge that using only responses 1 or 2 for $pid1d$ and $pid2d$ will remove non-responses, Independents, and "others" from the analysis.  We will also have to confirm these individuals are voters in 2018 using $voted2018$.
+
+Number of Entries:
+```{r Age_and_Party}
+Age_and_Party <-select(A, c("pid1d", "pid1r", "voted2018", "birthyr", "weight", "weight_spss", "caseid"))
+Age_and_Party$Party <- 
+  ifelse((Age_and_Party$pid1d==2 | Age_and_Party$pid1r == 2), 0,
+  ifelse((Age_and_Party$pid1d==1 | Age_and_Party$pid1r == 1), 1, -1)) 
+Age_and_Party<-filter(Age_and_Party, Party >= 0)
+Age_and_Party<-filter(Age_and_Party, voted2018 >= 1)
+paste("Number of Republicans: ", sum(Age_and_Party$Party==0))
+paste("Number of Democrats:   ", sum(Age_and_Party$Party==1))
+```
+
+There are no Null Values for birthyr
+
+```{r Null birthyr}
+paste("Number of Null Values for birthyr:", length(which(is.na(Age_and_Party$birthyr))))
+```
+
+We have 1228 people who claimed they are part of either party, Democrats and Republicans.  Now we need to see if the sample distribution of their ages are normal enough to use CLT.  We will draw a histogram of $birthyr$ to observe the distribution and any outliers.
+
+```{r birthyr histo, fig.width=8, fig.height=4}
+hist(Age_and_Party$birthyr, breaks = 50,
+     main = "Histogram of Democrats and Republicans Birth Years",
+     xlab = "Year")
+```
+
+The histogram of ages has a somewhat bimodal distribution however, with 1228 responses, we can rely on CLT. 
+
+#### The Test
+Since our sample's political id variable is metric (0 or 1) and $birthyr$ is metric, i.i.d (see general assumptions on page 1) and the data cannot be paired, we would argue that using an unpaired t-test.  The assumptions using this test is that the variables represented are metric and the data is drawn i.i.d. (See introduction).  The _Null Hypothesis_ is that the difference ages between Democrats and Republicans is equal to 0.
+
+$$ \mu_{D\_age} - \mu_{R\_age} = 0 $$
+```{r Q2 Test}
+t.test(Age_and_Party$birthyr~Age_and_Party$Party)
+```
+
+Here we have a statistically significant test is the p-value being less than 0.05.  We can reject the null hypothesis that there is an no age difference between Democrats and Republicans voters.  Republican voters are, on average, 3 years older than Democrat voters since they have a mean of a birth year of 1962 and the Democrat voters have a birth year mean of 1965.
+
+#### The Weighted Test
+```{r Q2 Weighted Test}
+library(survey)
+Age_and_Party_Weighted <- 
+  svydesign(id      = ~caseid,
+            weights = ~weight,
+            data    = Age_and_Party)
+
+paste("Does Weighting make a difference in the mean birth year?")
+paste("Average Birth Year before Weights: ", mean(Age_and_Party$birthyr))
+paste("Average Birth Year after Weights: ", svymean(~birthyr, Age_and_Party_Weighted))
+svyttest(birthyr~Party, Age_and_Party_Weighted)
+```
+Even weighted, we still have a statistically significant test is the p-value being less than 0.05.  We can again reject the null hypothesis that there is an no age difference between Democrats and Republicans voters.  Using weights, Republican voters are, on average, 4 (not 3) years older than Democrat voters.  It didn't change our outcome of the test, but it slightly modified our practical significance, in which the difference in mean was closer to 4 years than to 3 years.
+>Why did weights make a difference? The survey designers added in the weights to make sure the sample is a full representation of the US voting population.  If they couldn't fully complete their stratified random sampling, or there was a lot of non-respondants, groups could be underrepresnted or overrepresented in the sample.  Weights are then calculated to give respondants from these groups more or less "power" to the data represented so that one can infer more from the data to the population ... or in other words calibrate the sample to the population.  
+
+\newpage
+## Question 3: Do a majority of independent voters believe that the federal investigations of Russian election interference are baseless?
+
+
+\newpage 
+## Question 4:  Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
+
+
+\newpage
 ## Question 5: Do voters for Hillary Clinton perceive the chane in income inequality over the last 20 years differently from how voters for Donald Trump perceive it.
 
 ### Introducing our Research Question
