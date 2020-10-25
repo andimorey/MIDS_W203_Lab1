@@ -16,7 +16,7 @@ A = read.csv("anes_pilot_2018.csv")
 
 # The Data
 
-The American National Election Studies (ANES) conducts surveys of voters in the United States.  While its flagship survey occurs every four years at the time of each presidential election, ANES also conducts pilot studies midway between these elections.  We will be using this data to ask five (5) questions about the responsants:
+The American National Election Studies (ANES) conducts surveys of voters in the United States.  While its flagship survey occurs every four years at the time of each presidential election, ANES also conducts pilot studies midway between these elections.  We will be using this data to ask five (5) questions about the respondents:
 
 1. Do US voters have more respect for the police or for journalists?
 
@@ -38,11 +38,11 @@ _Identically Distributed_ - Once on person has taken the survey, they cannot tak
 
 _Generalizability_ - Because this is a modern, paid, opt-in survey, the sample data will only include individuals who have the propensity or financial motivation to complete the survey.  However, the financial impact is small, 21-50 cents for this 30 minute survey (see the ANES User Guide Code Book).  In addition, the survey provided weights in which the survey recommends to use when making inferences to the target population of U.S. adult citizens.
 
-Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern/gap not mentioned -- the data did not account for people who are ineligable to vote due to a felony).
+Given these, we can assume the iid assumption is valid and for results we worry about generalizability, we can use the weights to help us on questions in which we are concerned about generalizing to the population. (One concern/gap not mentioned -- the data did not account for people who are ineligible to vote due to a felony).
 
 _Confidence Interval_ - All tests will use a 95% confidence as standard practice.
 
-_Voting Population_ - Nearly all the question asks about voters.  The survey provides a few sample questions about the respondent to determine if that respondent was actually a voter. Variables $turnout18$ and $turnout18ns$ can be used to determine if they were a voter. For our analysis, we will only consider the population that have value 1, 2, or 3 for the variable $turnout18$ to take the conserative approach in considering US voters.
+_Voting Population_ - Nearly all the question asks about voters.  The survey provides a few sample questions about the respondent to determine if that respondent was actually a voter. Variables $turnout18$ and $turnout18ns$ can be used to determine if they were a voter. For our analysis, we will only consider the population that have value 1, 2, or 3 for the variable $turnout18$ to take the conservative approach in considering US voters.
 
 Let's look at how many observations are in those categories:
 ```{r}
@@ -54,6 +54,235 @@ paste("Number of Duplicate Voters for the main dataset: ", length(which(duplicat
 A$voted2018 <- ifelse((A$turnout18<=3), 1, 0)
 ```
 
-About 1% not sure or "probably" voted. We argue that because is a fairly small number and being uncertain about having voted in an election that has just taken place can be reasonably viewed as grounds for exclusion from the population of US 2018 voters.  We will use this population for all questions in this lab because all questions ask specfically about "voters".
+About 1% not sure or "probably" voted. We argue that because is a fairly small number and being uncertain about having voted in an election that has just taken place can be reasonably viewed as grounds for exclusion from the population of US 2018 voters.  We will use this population for all questions in this lab because all questions ask specifically about "voters".
 
 We also did a check to confirm there are no duplicate rows in the set of voted18.  If there are duplicates, we will need to filter them out, in this case where were none so we will not need to worry about this for the rest of the lab.
+
+```{r}
+paste("Number of Duplicate Values for the dataset:", length(which(duplicated(A))))
+```
+
+# Research Questions
+
+## Question 1: Do US voters have more respect for the police or for journalists?
+
+### Introducing the topic
+
+> Concept: To understand if US voters have different amount of respect police and jounralists. What we are trying to measure here, is a subjective variable.  
+
+> Operationalization: From a list of data points collected in the ANES 2018 Pilot Study, two are people's ratings of the police and of journalists in variables 'ftpolice' and 'ftjournal' respectively. The questions to collect these are "How would you rate the police?" and "How would you rate journalists?". These are the closest data points available to our question since they describe to what the sample population feels about the police and journalists respectively. The answers to these questions are collected on a rating scale between 0 to 100.
+
+> To get the subset of voters, we will use the voted2018 as descibed in the introduction.
+
+> Concerns or Gaps:
+
+> 1. The data collected is for rating police and journalists in general, not particularly based on respect. We have to be cautious while interpreting our conclusions since we are inferring respect from a total rating.
+
+> 2. One person's interpretation of the rating scale can be very different from another's, so if one person could think of brilliant as 90, another could think of brilliant as 94. This must also be kept in mind as caution while reading the conclusion.
+
+### Exploratory data analysis (EDA) of the relevant variables
+
+> Variables: ftpolice, ftjournal
+
+> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a rating scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. We cannot however, apply any arithmetic operaters (like +, -, /) to such variables.
+         
+> Number of Entries 
+
+```{r}
+library(tidyverse)
+usVoters <- A  %>% filter(A$voted2018  == 1)
+paste("Number of Entries for ftpolice:", length(usVoters$ftpolice))
+paste("Summary for ftpolice: ")
+summary(usVoters$ftpolice)
+paste("Number of Entries for ftjournal:", length(usVoters$ftjournal))
+paste("Summary for ftjournal: ")
+summary(usVoters$ftjournal)
+```
+
+> There are no Null Values for ftpolice and ftjournal
+
+```{r}
+paste("Number of Null Values for ftpolice:", length(which(is.na(usVoters$ftpolice))))
+paste("Number of Null Values for ftjournal:", length(which(is.na(usVoters$ftjournal))))
+```
+
+
+> We will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
+
+```{r}
+hist(usVoters$ftpolice, breaks = 100,
+     main = "Histogram of US voters' rating of the Police",
+     xlab = "Rating of Police on a scale from 
+     0(Very cold or unfavorable feeling) to 100 (Very warm or favorable feeling)")
+```
+> The distribution for ftpolice seems a little skewed towards the higher end, with upticks in the center.
+
+```{r}
+hist(usVoters$ftjournal, breaks = 100,
+     main = "Histogram of US voters' rating of the Journalists",
+     xlab = "Rating of Journalists on a scale from 
+     0(Very cold or unfavorable feeling) to 100 (Very warm or favorable feeling)")
+
+```
+
+> The distribution for ftjournal is lesser skewed than that of ftpolice. 
+
+> With the number of observations in both samples being well above the thumb rule (n=30), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+
+### Based on our EDA, selecting an appropriate hypothesis test
+
+> 1. Since we are comparing two samples, it will be a two-sample test. 
+> 2. Since the variables are of ordinal scale, we will use a non-parametric test.
+> 3. Since the two variables we are looking at are answered by the same person, there is enough dependence that we can take advantage of if we do a paired test. 
+> With all these above reasons, we narrow our choice of test down to Sign Test.
+
+> Assumptions to be able to use the Sign Test are:
+> 1. Variables represented are of ordnial Scale
+> 2. Data is paired and drawn from i.i.d samples
+
+> Since both the assumptions are satisfied, we will go ahead with using the sign test.
+
+> The Null Hypothesis we will be testing is:
+> US voters have equal respect for the police and journalists
+
+> We will do a two-tailed test since we are only interested in the alternative hypothesis:
+> US voters do not have equal respect for the police and journalists
+
+### Conducting the chosen test
+
+```{r}
+more_police = sum( usVoters$ftjournal < usVoters$ftpolice)
+trials = sum( usVoters$ftjournal < usVoters$ftpolice | usVoters$ftjournal > usVoters$ftpolice)
+binom.test(more_police , trials)
+```
+
+> The p-value being well under 0.05 (statistical significance we decided to consider) indicates that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
+
+> Practical significance:
+> The number of US voters in this sample who respect police more divided by the total number pairs of respecting either police or journalists more is 0.56. This is instead of the 0.5 we assumed for our null hypothesis, which would have reflected that US voters have equal respect for the police and journalists.
+
+## Question 5: Do voters for Hillary Clinton perceive the chane in income inequality over the last 20 years differently from how voters for Donald Trump perceive it.
+
+### Introducing our Research Question
+
+> There are a variety of issues people care about and consider significantly while voting and while choosing a candidate to vote for. Income inequality is one such issue. Income inequality has fluctuated over the years, both increasing and decreasing in portions of the last 20 years. 
+
+> The question we are interested in is how Hillary voters view the change in income inequality over the last 20 years versus how Trump voters view the change in income inequality over the last 20 years.
+
+> It has been argued that the extent and nature of participation in choosing leaders is closely associated with the distribution of resources in society (https://nathanjkelly.utk.edu/wp-content/uploads/2017/10/Franko-et-al-2016.pdf). It is plausible that voters' perception of change in income inequality could affect their voting behavior. Therefore, we feel this is an important question in understanding voting behavior.
+
+> We will evaluate this by building the appropriate hypothesis and using appropriate statistical tests under the assumptions that make them valid. 
+
+> Concept: To evaluate if Hillary voters look at the change in income inequality over the last 20 years differently from the way Trump voters look at the same. We are interested in seeing what people's perception of change in income inequality is in 2018 based on what candidate they preferred in 2016.  
+
+> Operationlization: The variable 'richpoor' captures the answer to the question "Do you think the difference in incomes between rich people and poor people in the United
+> States today is larger, smaller, or the same as it was 20 years ago?". This question was presented to all the participants of the survey. It can take one of the following seven values (along with the representing choices that the participants given to choose from):
+1 - A lot larger
+2 - A moderate amount larger
+3 - A little larger 
+4 - The same
+5 - A little smaller 
+6 - A moderate amount smaller
+7 - A lot smaller
+We will use this variable to understand how the voters viewed the change in income inequality in the last 20 years.
+
+> The variable 'vote16' captures the answer to the questions "In the 2016 presidential election, who did you vote for? Donald Trump, Hillary Clinton, or
+someone else?". It takes one of the following three values (along with the representing choices that the participants given to choose from):
+1 - Donald Trump
+2 - Hillary Clinton
+3 - Someone else
+> We will use this to distinguish between Hillary voters and Trump voters. 
+
+
+### Exploratory data analysis (EDA) of the relevant variables
+
+> Variables: richpoor, vote16
+
+> Types: richpoor is an ordinal variable since it has categories that have an order. Operataions like >,<,= are valid for the 'richpoor' variable. vote16 is a nominal variable since it has categories that do not have an order. Operataions like >,<,= do not make sense for the vote16 variable. We are only using the vote16 variable to separate out the two samples we are interested in comparing. 
+         
+> Number of Entries 
+
+```{r}
+hillary_voters <- A %>% filter(A$vote16==2)
+trump_voters <- A %>% filter(A$vote16==1)
+
+paste("Number of voters who voted for Hillary Clinton in 2016:", length(hillary_voters$vote16))
+
+paste("Number of voters who voted for Donald Trump in 2016:", length(trump_voters$vote16))
+```
+
+> There are no Null Values for the variable richpoor for Hillary or Trump voters
+
+```{r}
+paste("Number of Null Values for richpoor for Hillary voters:", length(which(is.na(hillary_voters$richpoor))))
+paste("Number of Null Values for richpoor for Trump voters:", length(which(is.na(trump_voters$richpoor))))
+```
+
+> Drawing out the histograms for the richpoor variable for both Hillary and Trump voters to observe sampling distribution
+
+```{r}
+hist(hillary_voters$richpoor)
+hist(hillary_voters$richpoor, breaks = 7,
+     main = "How Hillary voters viewed change in income inequality",
+     xlab = "Change in income inequality (ranging from 1-A lot larger to 7-A lot smaller)")
+```
+
+```{r}
+hist(trump_voters$richpoor)
+hist(trump_voters$richpoor, breaks = 7,
+     main = "How Trump voters viewed change in income inequality",
+     xlab = "Change in income inequality (ranging from 1-A lot larger to 7-A lot smaller)")
+```
+
+### Based on our EDA, selecting an appropriate hypothesis test
+
+> 1. Since we are comparing two samples, it will be a two-sample test. 
+> 2. Since the variables are of ordinal scale, parametric tests cannot be used.
+> 3. There is no dependence to rely on and therefore we will use an unpaired test. 
+> The distributions from the histograms look slightly skewed towards the left however, since we are intending to use the Wilcoxon Rank-Sum test, the skewness does not affect our choice of test.
+
+> With all these above reasons, we narrow our choice of test down to Wicoxon rank-sum test.
+
+> Assumptions to be able to use the Sign Test are:
+> 1. Variables represented are of ordnial Scale
+> 2. Data is paired and drawn from i.i.d samples
+
+> Since both the assumptions are satisfied, we will go ahead with using the Wicoxon rank-sum test.
+
+> The Null Hypothesis we will be testing is:
+> Hillary voters do not view change in income inequality over the last 20 years any differently than Trump voters do. 
+
+> We will do a two-tailed test since we are only interested in the alternative hypothesis:
+> There is a difference in the way Hillary voters and Trump voters view change in income inequality over the last 20 years.
+
+### Conducting the chosen test
+
+```{r}
+wilcox.test(trump_voters$richpoor,hillary_voters$richpoor)
+```
+
+> The p-value is less than 0.05 indicating that this test is statistically significant to reject the null hypothesis that Hillary voters do not view change in income inequality over the last 20 years any differently than Trump voters do.
+
+### Conclusion
+
+> From this test we see that Hillary voters view the change income inequality over the past 20 years differently from how Trump voters view this change.
+
+> We have noticed that the histograms we saw for the sample distributions reflected differences in how Hillary voters perceived change in income inequality over the past 20 years versus how Trump voters did. More Hillary voters thought of the inequality to have become a lot larger whereas Trump voters had opinions more spread on the scale.
+
+> From the wilcox.test documentation, "R's value can also be computed as the number of all pairs (trump_voters$richpoor, hillary_voters$richpoor) for which hillary_voters$richpoor is not greater than trump_voters$richpoor, the most common definition of the Mann-Whitney test."
+>
+> The total number of pairs is,
+
+```{r}
+(sum(A$vote16 == 1 & !is.na(A$richpoor)) * sum(A$vote16 == 2 & !is.na(A$richpoor)))
+```
+
+> 536432 (value of W obtained from our test) out 691460 pairs showed that there was a shift in the percieved rating for change in income inequality between Trump and Hillary voters. The percentage that gets us is 
+
+```{r}
+paste(536432*100/691460, "%")
+```
+
+>77% is a percent we feel comfortable to use and say that this shows that the test is practically significant along with being statistically significant. 
+
+> Common wisdom is that Democrat voters are more concerned about issues of inequality as compared to Republican voters and test results are consistent with this view.

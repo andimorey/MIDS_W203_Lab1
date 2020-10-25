@@ -21,29 +21,42 @@ A20 = read.csv("anes_pilot_2020ets_csv.csv")
 
 ### Introducing the topic
 
-> Concept: To understand if US voters have different amount of respect police and jounralists. What we are trying to measure here, is a subjective variable.  
+> Concept: To measure the amount of respect US voters have for police and jounralists, since it is subjective, we cannot use a metric variable. We have to use a scale like the Likert scale to possibly capture this data and therefore it can be best defined with an ordinal variable. 
 
-> Operationalization: From a list of data points collected in the ANES 2018 Pilot Study, two are people's ratings of the police and of journalists in variables 'ftpolice' and 'ftjournal' respectively. The questions to collect these are "How would you rate the police?" and "How would you rate journalists?". These are the closest data points available to our question since they describe to what the sample population feels about the police and journalists respectively. The answers to these questions are collected on a rating scale between 0 to 100.
 
-> To get the subset of voters, we will use the voted2018 as descibed in the introduction.
+> Operationalization: From a list of data points collected in the ANES 2018 Pilot Study, two are people's ratings of the police and of journalists in variables 'ftpolice' and 'ftjournal' respectively. The questions to collect these are "How would you rate the police?" and "How would you rate journalists?". These are the closest data points available to our question since they are the only ones related to what the sample population feels about the police and journalists respectively. The answers to these questions are collected on a Likert scale.
+>We are also going to take a subset of the total sample available from the ANES 2018 Pilot study of those people who have reported that they voted. To do so we will consider the variable 'turnout18' which contains the answer to the question "In the election held on November 6, did you definitely vote in person on election?". The variable holds one of the following five values:
+
+> 1 - Definitely voted in person on Nov 6
+> 2 - Definitely voted in person, before Nov 6
+> 3 - Definitely voted by mail
+> 4 - Definitely did not vote
+> 5 - Not completely sure
+
+> Another variable that could inform a portion of the population who have the 'turnout18' variable value as 5 who could have possibly voted can be covered from the variable 'turnout18ns'. This variable captures answer to the question "If you had to guess, would you say that you probably did vote in the election?". This variable takes one of the following three values: 
+
+> 1 - inapplicable, legitimate skip
+> 2 - Probably did vote
+> 3 - Probably did not vote
+
+> For our analysis, we will only consider the population that have value 1, 2, or 3 for the variable 'turnout18' to take the conserative approach in considering US voters.
 
 > Concerns or Gaps:
 
-> 1. The data collected is for rating police and journalists in general, not particularly based on respect. We have to be cautious while interpreting our conclusions since we are inferring respect from a total rating.
-
-> 2. One person's interpretation of the rating scale can be very different from another's, so if one person could think of brilliant as 90, another could think of brilliant as 94. This must also be kept in mind as caution while reading the conclusion.
+> 1. The data collected is for rating police and journalists in general, not particularly based on respect. Inferring respect from a total rating will not give us accurate conclusions to draw.
+> 2. One person's interpretation of the Likert scale can be very different from another's, so if one person could think of brilliant as 90, another could think of brilliant as 94. This must be kept in mind as caution while reading the conclusion.
 
 ### Exploratory data analysis (EDA) of the relevant variables
 
 > Variables: ftpolice, ftjournal
 
-> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a rating scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. We cannot however, apply any arithmetic operaters (like +, -, /) to such variables.
+> Types: Both ftpolice and ftjournal are Ordinal type variables. Since the variables are measured on a Likert scale, they have defined categories that have an order. So can apply operators like <, >, as well as =. We cannot however, apply any arithmetic operaters (like +, -, /) to such variables.
          
 > Number of Entries 
 
 ```{r}
 library(tidyverse)
-usVoters <- A  %>% filter(A$voted2018  == 1)
+usVoters <- A  %>% filter(A$turnout18 > 0 & A$turnout18 < 4)
 paste("Number of Entries for ftpolice:", length(usVoters$ftpolice))
 paste("Summary for ftpolice: ")
 summary(usVoters$ftpolice)
@@ -59,33 +72,47 @@ paste("Number of Null Values for ftpolice:", length(which(is.na(usVoters$ftpolic
 paste("Number of Null Values for ftjournal:", length(which(is.na(usVoters$ftjournal))))
 ```
 
-
-> We will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
-
-```{r}
-hist(usVoters$ftpolice, breaks = 100,
-     main = "Histogram of US voters' rating of the Police",
-     xlab = "Rating of Police on a scale from 
-     0(Very cold or unfavorable feeling) to 100 (Very warm or favorable feeling)")
-```
-> The distribution for ftpolice seems a little skewed towards the higher end, with upticks in the center.
+> There are no duplicate rows in the dataset of US Voters
 
 ```{r}
-hist(usVoters$ftjournal, breaks = 100,
-     main = "Histogram of US voters' rating of the Journalists",
-     xlab = "Rating of Journalists on a scale from 
-     0(Very cold or unfavorable feeling) to 100 (Very warm or favorable feeling)")
-
+paste("Number of Duplicate Values for the dataset usVoters:", length(which(duplicated(usVoters))))
 ```
 
-> The distribution for ftjournal is lesser skewed than that of ftpolice. 
+> [ATTENTION!!] Will draw a histogram of both ftpolice and ftjournal to observe the distribution and any outliers
 
-> With the number of observations in both samples being well above the thumb rule (n=30), we can use the Central Limit Theorem to deduce that the distribution of the means approaches a normal distribution.
+```{r}
+hist(usVoters$ftpolice)
+```
+
+> We will now observe the skewness of ftpolice variable
+
+```{r}
+library(e1071)  
+skewness(usVoters$ftpolice)
+```
+
+> The distribution for ftpolice seems a little skewed towards the higher end, but the skewness level is moderate (skewness is between -1 and -0.5 or between 0.5 and 1).
+
+```{r}
+hist(usVoters$ftjournal)
+```
+
+> We will observe the skewness of ftpolice variable
+
+```{r}
+skewness(usVoters$ftjournal)
+```
+
+> The distribution for ftjournal is lesser skewed than ftpolice and the skewness level is at a low (skewness is between -0.5 and 0.5,).
+
+> We will now observe the variable to see if it is identically and independently distributed (iid)
+
+>  As a modern survey, the ANES 2018 Pilot Study we can expect the selection to be from iid drawn.  You might worry that some people are more likely to respond than others (some more motivated for the money since this is a survey they get paid for).  But this isn't a problem for iid, it just means that the population of respondents is not the same as the population representing all Americans.  It's a problem for generalizability. Since there is only a finite number of Americans, it is impossible to have perfect independence.  Once a person is drawn, they cannot be drawn again, so the distribution for the next draw has changed.  However, the change is likely to be very small, so we can safely ignore these finite-sample effects.  On the whole, there are issues to worry about, but modern surveys like the ANES 2018 Pilot Study do a pretty good job of making the iid assumption valid. Codebook and User’s Guide to the ANES 2018 Pilot Study mentiones that the survey participation is independent of variables measured in the survey. 
 
 ### Based on our EDA, selecting an appropriate hypothesis test
 
 > 1. Since we are comparing two samples, it will be a two-sample test. 
-> 2. Since the variables are of ordinal scale, we will use a non-parametric test.
+> 2. Since the variables are of ordinal scale, parametric tests cannot be used.
 > 3. Since the two variables we are looking at are answered by the same person, there is enough dependence that we can take advantage of if we do a paired test. 
 > With all these above reasons, we narrow our choice of test down to Sign Test.
 
@@ -101,6 +128,8 @@ hist(usVoters$ftjournal, breaks = 100,
 > We will do a two-tailed test since we are only interested in the alternative hypothesis:
 > US voters do not have equal respect for the police and journalists
 
+> We will consider the significance level of 0.01 since we are looking at a large number of observations. We understand that with greater number of observations, statistical significance gets easier to achieve for small effects, so we are considering 0.01 and not 0.05 as our significance level for this test.
+
 ### Conducting the chosen test
 
 ```{r}
@@ -109,12 +138,10 @@ trials = sum( usVoters$ftjournal < usVoters$ftpolice | usVoters$ftjournal > usVo
 binom.test(more_police , trials)
 ```
 
-> The p-value being well under 0.05 (statistical significance we decided to consider) indicates that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
+> The p-value being well under 0.01 (statistical significance we decided to consider) indicating that we can reject the null hypothesis that US voters have equal respect for the police and journalists.
 
 > Practical significance:
-> The number of US voters in this sample who respect police more divided by the total number pairs of respecting either police or journalists more is 0.56. This is instead of the 0.5 we assumed for our null hypothesis, which would have reflected that US voters have equal respect for the police and journalists.
-
-
+> We see that the probability of US voters have respecting police more comes up as 0.56 from the Sign Test. In our hypothesis we assumed it would be 0.5 reflecting that US voters have equal respect for the police and journalists. Thus, we see that the effect is not a very large one even though the p-value was very low to reflect a statistically significant result.
 
 
 ## Question 2: Are Republican voters older or younger than Democratic voters?
@@ -510,126 +537,211 @@ binom.test(more_anger , trials)
 
 ## Question 5: Select a fifth question that you believe is important for understanding the behavior of voters
 
-### Introducing our Research Question
+a.
 
-> There are a variety of issues people care about and consider significantly while voting and while choosing a candidate to vote for. Income inequality is one such issue. Income inequality has fluctuated over the years, both increasing and decreasing in portions of the last 20 years. 
+Characteristics of non voters - race, education level, work, belief in corruption, opinion on gun laws, recognize german chancellor
 
-> The question we are interested in is how Hillary voters view the change in income inequality over the last 20 years versus how Trump voters view the change in income inequality over the last 20 years.
+```{r}
+paste("Definitely Voted: ", sum(A$turnout18 <= 3))
+paste("Not completely sure or Probably did vote: ", sum(A$turnout18 == 5 & A$turnout18ns == 1))
+A$voted2018 <- ifelse((A$turnout18<=3), 1, 0)
 
-> It has been argued that the extent and nature of participation in choosing leaders is closely associated with the distribution of resources in society (https://nathanjkelly.utk.edu/wp-content/uploads/2017/10/Franko-et-al-2016.pdf). It is plausible that voters' perception of change in income inequality could affect their voting behavior. Therefore, we feel this is an important question in understanding voting behavior.
+voters <- A %>% filter(A$voted2018==1)
+nonVoters <- A %>% filter(A$voted2018==0)
+```
 
-> We will evaluate this by building the appropriate hypothesis and using appropriate statistical tests under the assumptions that make them valid. 
+Race
 
-> Concept: To evaluate if Hillary voters look at the change in income inequality over the last 20 years differently from the way Trump voters look at the same. We are interested in seeing what people's perception of change in income inequality is in 2018 based on what candidate they preferred in 2016.  
+```{r}
+voters_race_answered <- voters %>% filter(voters$race!=-7)
+hist(voters_race_answered$race)
+```
 
-> Operationlization: The variable 'richpoor' captures the answer to the question "Do you think the difference in incomes between rich people and poor people in the United
-> States today is larger, smaller, or the same as it was 20 years ago?". This question was presented to all the participants of the survey. It can take one of the following seven values (along with the representing choices that the participants given to choose from):
-1 - A lot larger
-2 - A moderate amount larger
-3 - A little larger 
-4 - The same
-5 - A little smaller 
-6 - A moderate amount smaller
-7 - A lot smaller
-We will use this variable to understand how the voters viewed the change in income inequality in the last 20 years.
-
-> The variable 'vote16' captures the answer to the questions "In the 2016 presidential election, who did you vote for? Donald Trump, Hillary Clinton, or
-someone else?". It takes one of the following three values (along with the representing choices that the participants given to choose from):
-1 - Donald Trump
-2 - Hillary Clinton
-3 - Someone else
-> We will use this to distinguish between Hillary voters and Trump voters. 
+```{r}
+nonVoters_race_answered <- nonVoters %>% filter(nonVoters$race!=-7)
+hist(nonVoters_race_answered$race)
+```
 
 
-### Exploratory data analysis (EDA) of the relevant variables
+```{r}
+wilcox.test(voters_race_answered$race, nonVoters_race_answered$race)
+```
 
-> Variables: richpoor, vote16
+Education Level
 
-> Types: richpoor is an ordinal variable since it has categories that have an order. Operataions like >,<,= are valid for the 'richpoor' variable. vote16 is a nominal variable since it has categories that do not have an order. Operataions like >,<,= do not make sense for the vote16 variable. We are only using the vote16 variable to separate out the two samples we are interested in comparing. 
-         
-> Number of Entries 
+```{r}
+hist(voters$educ)
+```
+
+```{r}
+hist(nonVoters$educ)
+```
+
+```{r}
+wilcox.test(voters$educ, nonVoters$educ)
+```
+
+Practical 
+
+```{r}
+library(ggpubr)
+
+A$voted2018categorical <- ifelse((A$turnout18<=3), "voted", "did not vote")
+ggdensity(A, x = "educ", fill = "voted2018categorical") +
+  scale_fill_manual(values=c("#222a84","#cf1c10"))
+
+```
+
+
+Employment
+
+```{r}
+hist(voters$employ)
+```
+
+```{r}
+hist(nonVoters$employ)
+```
+
+```{r}
+wilcox.test(voters$employ, nonVoters$employ)
+```
+
+Practical 
+
+```{r}
+library(ggpubr)
+
+A$voted2018categorical <- ifelse((A$turnout18<=3), "voted", "did not vote")
+ggdensity(A, x = "employ", fill = "voted2018categorical") +
+  scale_fill_manual(values=c("#222a84","#cf1c10"))
+
+```
+
+Believe in Corruption
+
+```{r}
+voters_corrupt_answered <- voters %>% filter(voters$corrupt!=-7)
+hist(voters_corrupt_answered$corrupt)
+```
+
+```{r}
+nonVoters_corrupt_answered <- nonVoters %>% filter(nonVoters$corrupt!=-7)
+hist(nonVoters_corrupt_answered$corrupt)
+```
+
+
+```{r}
+wilcox.test(voters_corrupt_answered$corrupt, nonVoters_corrupt_answered$corrupt)
+```
+
+Believe in Background check for guns
+
+```{r}
+voters_guncheck_answered <- voters %>% filter(voters$guncheck!=-7)
+hist(voters_guncheck_answered$guncheck)
+```
+
+```{r}
+nonVoters_guncheck_answered <- nonVoters %>% filter(nonVoters$guncheck!=-7)
+hist(nonVoters_guncheck_answered$guncheck)
+```
+
+
+```{r}
+wilcox.test(voters_guncheck_answered$guncheck, nonVoters_guncheck_answered$guncheck)
+```
+
+Believe in banning the sale of semi-automatic “assault-style” rifles
+
+```{r}
+voters_gunsar_answered <- voters %>% filter(voters$gunsar!=-7)
+hist(voters_gunsar_answered$gunsar)
+```
+
+```{r}
+nonVoters_gunsar_answered <- nonVoters %>% filter(nonVoters$gunsar!=-7)
+hist(nonVoters_gunsar_answered$gunsar)
+```
+
+
+```{r}
+wilcox.test(voters_gunsar_answered$gunsar, nonVoters_gunsar_answered$gunsar)
+```
+
+Climate Change
+
+```{r}
+voters_race_answered <- voters %>% filter(voters$race!=-7)
+hist(voters_race_answered$race)
+```
+
+```{r}
+nonVoters_race_answered <- nonVoters %>% filter(nonVoters$race!=-7)
+hist(nonVoters_race_answered$race)
+```
+
+
+```{r}
+wilcox.test(voters_race_answered$race, nonVoters_race_answered$race)
+```
+
+Correctly recognize german chancellor
+
+```{r}
+t.test(A$pk_germ_correct ~ A$voted2018categorical)
+```
+
 
 ```{r}
 hillary_voters <- A %>% filter(A$vote16==2)
 trump_voters <- A %>% filter(A$vote16==1)
-
-paste("Number of voters who voted for Hillary Clinton in 2016:", length(hillary_voters$vote16))
-
-paste("Number of voters who voted for Donald Trump in 2016:", length(trump_voters$vote16))
 ```
 
-> There are no Null Values for the variable richpoor for Hillary or Trump voters
-
-```{r}
-paste("Number of Null Values for richpoor for Hillary voters:", length(which(is.na(hillary_voters$richpoor))))
-paste("Number of Null Values for richpoor for Trump voters:", length(which(is.na(trump_voters$richpoor))))
-```
-
-> Drawing out the histograms for the richpoor variable for both Hillary and Trump voters to observe sampling distribution
 
 ```{r}
 hist(hillary_voters$richpoor)
-hist(hillary_voters$richpoor, breaks = 7,
-     main = "How Hillary voters viewed change in income inequality",
-     xlab = "Change in income inequality (ranging from 1-A lot larger to 7-A lot smaller)")
 ```
 
 ```{r}
-hist(trump_voters$richpoor)
-hist(trump_voters$richpoor, breaks = 7,
-     main = "How Trump voters viewed change in income inequality",
-     xlab = "Change in income inequality (ranging from 1-A lot larger to 7-A lot smaller)")
+hist(trump_voters$richpoor/trump_voters$)
 ```
-
-### Based on our EDA, selecting an appropriate hypothesis test
-
-> 1. Since we are comparing two samples, it will be a two-sample test. 
-> 2. Since the variables are of ordinal scale, parametric tests cannot be used.
-> 3. There is no dependence to rely on and therefore we will use an unpaired test. 
-> The distributions from the histograms look slightly skewed towards the left however, since we are intending to use the Wilcoxon Rank-Sum test, the skewness does not affect our choice of test.
-
-> With all these above reasons, we narrow our choice of test down to Wicoxon rank-sum test.
-
-> Assumptions to be able to use the Sign Test are:
-> 1. Variables represented are of ordnial Scale
-> 2. Data is paired and drawn from i.i.d samples
-
-> Since both the assumptions are satisfied, we will go ahead with using the Wicoxon rank-sum test.
-
-> The Null Hypothesis we will be testing is:
-> Hillary voters do not view change in income inequality over the last 20 years any differently than Trump voters do. 
-
-> We will do a two-tailed test since we are only interested in the alternative hypothesis:
-> There is a difference in the way Hillary voters and Trump voters view change in income inequality over the last 20 years.
-
-### Conducting the chosen test
 
 ```{r}
-wilcox.test(trump_voters$richpoor,hillary_voters$richpoor)
+wilcox.test(hillary_voters$richpoor,trump_voters$richpoor)
 ```
 
-> The p-value is less than 0.05 indicating that this test is statistically significant to reject the null hypothesis that Hillary voters do not view change in income inequality over the last 20 years any differently than Trump voters do.
 
-### Conclusion
 
-> From this test we see that Hillary voters view the change income inequality over the past 20 years differently from how Trump voters view this change.
+### Clearly argue for the relevance of this question.  (10 points)
+In words, clearly state your research question and argue why it is important for understanding the recent voting behavior. Explain it as if you were presenting to an audience that includes technical and non technical members.
 
-> We have noticed that the histograms we saw for the sample distributions reflected differences in how Hillary voters perceived change in income inequality over the past 20 years versus how Trump voters did. More Hillary voters thought of the inequality to have become a lot larger whereas Trump voters had opinions more spread on the scale.
+There are a variety of issues people care about and consider significantly while voting and while choosing a candidate to vote for. Income inequality is one such reason. Income inequality has fluctuated over the years, both increasing and decreasing in portions of the last 20 years. 
 
-> From the wilcox.test documentation, "R's value can also be computed as the number of all pairs (trump_voters$richpoor, hillary_voters$richpoor) for which hillary_voters$richpoor is not greater than trump_voters$richpoor, the most common definition of the Mann-Whitney test."
->
-> The total number of pairs is,
+The question we are interested in is how Hillary voters view the change in income inequality over the last 20 years versus how Trump voters view the change in income inequality over the last 20 years.
 
-```{r}
-(sum(A$vote16 == 1 & !is.na(A$richpoor)) * sum(A$vote16 == 2 & !is.na(A$richpoor)))
-```
+This quest
 
-> 536432 (value of W obtained from our test) out 691460 pairs showed that there was a shift in the percieved rating for change in income inequality between Trump and Hillary voters. The percentage that gets us is 
 
-```{r}
-paste(536432*100/691460, "%")
-```
 
->77% is a percent we feel comfortable to use and say that this shows that the test is practically significant along with being statistically significant. 
+Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
 
-> Common wisdom is that Democrat voters are more concerned about issues of inequality as compared to Republican voters and test results are consistent with this view.
+### Perform EDA and select your hypothesis test (5 points)
+
+Perform an exploratory data analysis (EDA) of the relevant variables.
+
+This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
+
+Based on your EDA, select an appropriate hypothesis test.
+Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+### Conduct your test. (2 points)
+Explain (1) the statistical significance of your result, and (2) the practical significance of your result.
+
+### Conclusion (3 points)
+Clearly state the conclusion of your hypothesis test and how it relates to your research question.
+
+Finally, briefly present your conclusion in words as if you were presenting to an audience that includes technical and non technical members.
+
+
+
