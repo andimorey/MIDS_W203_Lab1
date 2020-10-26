@@ -123,6 +123,13 @@ About 1%. We can argue that a. that is a fairly small number, and b. being uncer
 
 ```{r}
 voter_sample = A[ which(A$turnout18 < 4),]
+respect = voter_sample[which(voter_sample$ftpolice>=70 | voter_sample$ftjournal>=70),]
+
+ggplot(respect[which(respect$ftjournal>=70),], aes(x=trustmedia, y=ftjournal) ) +
+  geom_point(alpha = 0.3) +
+  theme_bw()
+
+hist(respect[which(respect$ftjournal>=70),]$trustmedia, breaks=10)
 ```
 
 **Histograms of the data**
@@ -134,14 +141,31 @@ hist(voter_sample$ftpolice, breaks = 100,
 ```
 
 ```{r}
+hist(respect$ftpolice, breaks = 100,
+     main = "2018 Voter Respect responses to 'How do you rate the police?'",
+     xlab = "Sentiment measure")
+```
+
+```{r}
 hist(voter_sample$ftjournal, breaks = 100,
      main = "2018 Voter responses to 'How do you rate journalists?'",
+     xlab = "Sentiment measure")
+```
+```{r}
+hist(respect$ftjournal, breaks = 100,
+     main = "2018 Voter Respect responses to 'How do you rate journalists?'",
      xlab = "Sentiment measure")
 ```
 
 **Scatter Plot**
 ```{r}
 ggplot(voter_sample, aes(x=ftpolice, y=ftjournal) ) +
+  geom_point(alpha = 0.3) +
+  theme_bw()
+```
+
+```{r}
+ggplot(respect, aes(x=ftpolice, y=ftjournal) ) +
   geom_point(alpha = 0.3) +
   theme_bw()
 ```
@@ -175,9 +199,15 @@ Explain why your test is the most appropriate choice.  List and evaluate all ass
 
 ### Conduct your test. (5 points)
 Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
-
 ```{r}
 q1_data <- voter_sample[which(voter_sample$ftjournal != -7),]
+more_police <- sum( q1_data$ftjournal < q1_data$ftpolice)
+trials <- sum( q1_data$ftjournal < q1_data$ftpolice | q1_data$ftjournal > q1_data$ftpolice)
+binom.test(more_police, trials)
+```
+
+```{r}
+q1_data <- respect[which(respect$ftjournal != -7),]
 more_police <- sum( q1_data$ftjournal < q1_data$ftpolice)
 trials <- sum( q1_data$ftjournal < q1_data$ftpolice | q1_data$ftjournal > q1_data$ftpolice)
 binom.test(more_police, trials)
@@ -242,6 +272,7 @@ This should include a treatment of non-response and other special codes, basic s
 *David's prelim EDA:*
 
 **Winnowing the data:**
+Option 1.
 As discussed above, we will extract observations from the `voter_sample` from Question 1 for which one or more of the votes are for one of the parties and none are for the other.
 ```{r}
 partisan_voters <- voter_sample %>%
@@ -285,6 +316,71 @@ Both distributions seem very reasonable. The number of data points is also very 
 cat("Dem voters:", sum(partisan_voters$partisan == "dem"), ";",
       "GOP voters:", sum(partisan_voters$partisan == "gop"))
 ```
+
+Option 2.
+
+```{r}
+partisan_voters2 <- voter_sample %>%
+  filter(pid7x == 1 | pid7x == 2 | pid7x == 6 | pid7x == 7)
+
+partisan_voters2$partisan <- factor(ifelse(partisan_voters2$pid7x < 3, "dem", "gop"))
+```
+
+How did they vote?
+```{r}
+ggplot(partisan_voters2, aes(x=house18p, y=senate18p) ) +
+  geom_point(alpha = 0.3) +
+  theme_bw()
+```
+
+```{r}
+hist(partisan_voters2[partisan_voters2$partisan == "dem",]$birthyr, breaks = 100,
+     main = "Democratic voters' birth years",
+     xlab = "Year")
+```
+```{r}
+hist(partisan_voters2[partisan_voters2$partisan == "gop",]$birthyr, breaks = 100,
+     main = "Republican voters' birth years",
+     xlab = "Year")
+```
+```{r}
+cat("Dem voters:", sum(partisan_voters2$partisan == "dem"), ";",
+      "GOP voters:", sum(partisan_voters2$partisan == "gop"))
+```
+
+Option 3.
+
+```{r}
+partisan_voters3 <- voter_sample %>%
+  filter(pid1d == 1 | pid1d == 2 | pid1r == 1 | pid1r == 2)
+
+partisan_voters3$partisan <- factor(
+  ifelse(partisan_voters3$pid1d == 1 | partisan_voters3$pid1r == 1, "dem", "gop"))
+```
+
+How did they vote?
+```{r}
+ggplot(partisan_voters3, aes(x=house18p, y=senate18p) ) +
+  geom_point(alpha = 0.3) +
+  theme_bw()
+```
+
+```{r}
+hist(partisan_voters3[partisan_voters3$partisan == "dem",]$birthyr, breaks = 100,
+     main = "Democratic voters' birth years",
+     xlab = "Year")
+```
+
+```{r}
+hist(partisan_voters3[partisan_voters3$partisan == "gop",]$birthyr, breaks = 100,
+     main = "Republican voters' birth years",
+     xlab = "Year")
+```
+
+```{r}
+cat("Dem voters:", sum(partisan_voters3$partisan == "dem"), ";",
+      "GOP voters:", sum(partisan_voters3$partisan == "gop"))
+```
 ### Based on your EDA, select an appropriate hypothesis test.  (5 points)
 Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
 
@@ -300,7 +396,12 @@ Explain (1) the statistical significance of your result, and (2) the practical s
 ```{r}
 t.test(birthyr ~ partisan, data = partisan_voters)
 ```
-
+```{r}
+t.test(birthyr ~ partisan, data = partisan_voters2)
+```
+```{r}
+t.test(birthyr ~ partisan, data = partisan_voters3)
+```
 **Conclusions:** We have a statistically significant test with a t-statistic of 5.66, so we reject the null hypothesis. On average, Republican voters are older than Democratic voters.
 
 In terms of practical significance the difference in mean birth year constitutes a good measure. Coming in at 4.4 years, it is perhaps not a generational difference, but meaningful never-the-less. 
@@ -314,19 +415,51 @@ Explain how your variables are operationalized.  Comment on any gaps that you ca
 
 1. *Question:* The three most relevant fields look to be `russia16` (Do you think the Russian government probably interfered in the 2016 presidential election to try to help Donald Trump win, or do you think this probably did not happen?), `muellerinv` (Do you approve, disapprove, or neither approve nor disapprove of Robert Mueller’s investigation of Russian interference in the 2016 election?) and `coord16` (Do you think Donald Trump’s 2016 campaign probably coordinated with the Russians, or do you think his campaign probably did not do this?). These variables are likely to be highly correlated, so it will be important to operationalize them wisely as to try to answer the question in the most valid manner.
 
-2. *Population:* We are looking to answer the question for the population of independent voters. At this point of the analysis, the most logical definition that can help us obtain a sample of that population would be observations that are in `voter sample` from Question 1, but not in `partisan_voter` from Question 2.
+The key question is what does it mean "to believe that the federal investigations of Russian election interference are baseless"? My interpretation is that this phrasing is equivalent to "to believe that no Russian election interference happened". Using a measure of approval of the specific Mueller investigation is not an appropriate answer to this question as it is completely credible to "not believe that the investigation is baseless", but disapprove of it for some other reason.
 
-3. *Gaps:*
+The other possible variable, measuring opinions whether the Trump campaign coordinated with the Russians, is also tangential to the main question, which refers to the investigation as one of the Russian interference, not as an investigation of the Trump campaign's coordination.
+
+With the exception of possible "No Answers", the variable `russia16` is a binary variable (yes/no) and therefore metric. If we get some "No Answers" we'll have to consider eliminating them.
+
+2. *Population:* Option 1. We are looking to answer the question for the population of independent voters. At this point of the analysis, the most logical definition that can help us obtain a sample of that population would be observations that are in `voter sample` from Question 1, but not in `partisan_voter` from Question 2.
+
+Option 2. We can take the self-defined Independent voters `voter_sample` for whom `pid7x` is 3, 4, or 5.
+
+3. *Gaps:* The main possible issue here is with using disbelief in Russian interference as indicator of belief in the baselessness of the investigation. But it seems reasonable that this is indeed a very appropriate variable.
 
 ### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
 This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
 
+```{r}
+ind_voters2 <- voter_sample %>%
+  filter(pid7x == 3 | pid7x == 4 | pid7x == 5)
+```
+
+```{r}
+table(ind_voters2$russia16)
+```
+
+So the subset of independent voters has no -7 (No Answer) values and is properly binary.
+
 ### Based on your EDA, select an appropriate hypothesis test.  (5 points)
 Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+The variable is metric and its distribution is bimodal, but that is not a major problem for the CLT.  In addition, there is a large sample size. We can run a one-sample t.test.
+
+Our null hypothesis is that exactly 50% of independent voters find the investigation baseless. That translates to a mean of the variable of 1.5, but for more clarity we can just recode the negative responses to 0.
+
+Since we don't have a clear view to the directionality of a possible rejection of the null hypothesis and since we woule be interested in a statistically significant result in wither direction, we'll run a two-tailed test. 
 
 ### Conduct your test. (5 points)
 Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
 
+```{r}
+test_var <- ifelse(ind_voters2$russia16 == 1, 1, 0)
+t.test(test_var, mu = 0.5)
+```
+Statistically significant result. We reject the null hypothesis, but in the other direction - in favor of an alternative hypothesis that a majority of independent voters believe that the federal investigation of Russian interference is not baseless.
+
+In terms of practical significance, if 56% of independent voters believe in the appropriateness of the investigation and that pushes them to vote for one party over the other, it could be quite significant. In close presidential elections, such votes are golden.
 
 ## Question 4: Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
 
@@ -337,13 +470,100 @@ Explain how your variables are operationalized.  Comment on any gaps that you ca
 
 2. *Population:* Since the question is about an increase of voter turnout, what we are interested in is the population of voters that could have voted in 2016 but did not, given that they did vote in 2018. So we can start with our `voter_sample` and use the field `turnout16` ("In 2016, the major candidates for president were Donald Trump for the Republicans and Hillary Clinton for the Democrats. In that election, did you definitely vote, definitely not vote, or are you not completely sure whether you voted?"), `turnout16b` ([IF turnout16=3] "Do you think you probably voted or probably did not vote?"), and `birthyr` to determine our sample of respondents who were eligible in 2016, didn't vote in 2016 and voted in 2018.
 
-3. *Gaps:*
+3. *Gaps:* 1. From a population perspective we might introduce a few false positives in our 2016 voting eligibility selection by only using birth year as people born in the last 2 months of 1998 would not have been eligible to vote.
+
+2. There is an implied causality in the question. That is problem. From this dataset we can't answer this question. I believe if the question is rephrased as "Did people who voted in 2018, but not in 2016 feel more afraid or more angry", then we would be able to address it.
 
 ### Perform an exploratory data analysis (EDA) of the relevant variables. (5 points)
 This should include a treatment of non-response and other special codes, basic sanity checks, and a justification for any values that are removed.  Use visual tools to assess the relationship among your variables and comment on any features you find.
 
+Let's get our population first.
+
+```{r}
+add_turnout <- voter_sample[which((voter_sample$turnout16 == 2 | voter_sample$turnout16b == 2) & voter_sample$birthyr < 1999),]
+```
+
+```{r}
+dim(add_turnout)
+```
+
+#### Option 1. Feeling angry/afraid in general.
+
+```{r}
+table(add_turnout$geangry)
+```
+
+```{r}
+table(add_turnout$geafraid)
+```
+
+So we have 88 datapoints. Of those 1 has a No Answer for anger and 3 have No Answers for afraid. Let's look at the distributions of answers.
+
+```{r}
+hist(add_turnout$geangry, breaks = 10)
+```
+
+```{r}
+hist(add_turnout$geafraid, breaks = 10)
+```
+
+#### Option number 2. Feeling angry/afraid for a specific political reason. `imafraid`, `imangry`, `dtafraid`, `dtangry`.
+
+```{r}
+hist(add_turnout$imafraid, breaks = 10)
+```
+
+```{r}
+hist(add_turnout$imangry, breaks = 10)
+```
+
+```{r}
+hist(add_turnout$dtafraid, breaks = 10)
+```
+
+```{r}
+hist(add_turnout$dtangry, breaks = 10)
+```
+
 ### Based on your EDA, select an appropriate hypothesis test.  (5 points)
 Explain why your test is the most appropriate choice.  List and evaluate all assumptions for your test.
+
+These are paired ordinal variables, so we have to again use a sign test.
+
+the null hypothesis is that the voters who have exercised their voting rights in 2018 unlike in 2016, are equally angry and afraid.
+
+```{r}
+q4_data <- add_turnout[which(add_turnout$geangry > -7 & add_turnout$geafraid > -7)]
+more_afraid <- sum( q4_data$geangry < q4_data$geafraid)
+trials <- sum( q4_data$geangry < q4_data$geafraid | q4_data$geangry > q4_data$geafraid)
+binom.test(more_afraid, trials)
+```
+
+We fail to reject the null hypothesis. As Yoda said, fear leads to anger and anger leads to suffering, so perhaps fear and anger are closely related, though not so clear if they drive turnout.
+
+Option 2.
+```{r}
+q4_data2 <- add_turnout[which((add_turnout$dtangry > 0 & add_turnout$dtafraid > 0) |
+                              (add_turnout$imangry > 0 & add_turnout$imafraid > 0)),]
+q4_data2$fear <- ifelse(q4_data2$dtafraid > 0,
+                        q4_data2$dtafraid,           
+                        q4_data2$imafraid)
+q4_data2$anger <- ifelse(q4_data2$dtangry > 0,
+                        q4_data2$dtangry,           
+                        q4_data2$imangry)
+                        
+more_afraid2 <- sum( q4_data2$anger < q4_data2$fear)
+trials2 <- sum( q4_data2$anger < q4_data2$fear | q4_data2$anger > q4_data2$fear)
+binom.test(more_afraid2, trials2)
+```
+
+```{r}
+q4_data3 <- add_turnout[which(add_turnout$dtangry > 0 & add_turnout$dtafraid > 0),]
+                        
+more_afraid3 <- sum( q4_data3$dtangry < q4_data3$dtafraid)
+trials3 <- sum( q4_data3$dtangry < q4_data3$dtafraid | q4_data3$dtangry > q4_data3$dtafraid)
+binom.test(more_afraid3, trials3)
+```
 
 ### Conduct your test. (5 points)
 Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
@@ -373,5 +593,18 @@ Clearly state the conclusion of your hypothesis test and how it relates to your 
 
 Finally, briefly present your conclusion in words as if you were presenting to an audience that includes technical and non technical members.
 
+```{r}
+q5_data <- A[which(A$turnout16 == 1),]
+q5_data %>%
+  group_by(immigrant, vote16) %>%
+  summarize(count = n())
+```
+```{r}
+q5_data[which(q5_data$ftaltright >= 0),] %>%
+  group_by(immigrant) %>%
+  summarize(attitude = mean(ftaltright), count = n())
+```
 
+```{r group empathy}
 
+```
