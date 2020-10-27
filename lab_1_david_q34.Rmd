@@ -112,7 +112,7 @@ The variable is metric and its distribution is bimodal, but that is not a major 
 
 Our null hypothesis is that exactly 50% of independent voters find the investigation baseless. That translates to a mean of the variable of 1.5, but for more clarity we can just recode the negative responses to 0 and the positive responses to 1.
 
-Since we don't have a clear view to the directionality of a possible rejection of the null hypothesis and since we woule be interested in a statistically significant result in wither direction, we'll run a two-tailed test. 
+Since we don't have a clear view to the directionality of a possible rejection of the null hypothesis and since we would be interested in a statistically significant result in wither direction, we'll run a two-tailed test. 
 
 ### Conduct your test. (5 points)
 Explain (1) the statistical significance of your result, and (2) the practical significance of your result.  Make sure you relate your findings to the original research question.
@@ -121,9 +121,9 @@ Explain (1) the statistical significance of your result, and (2) the practical s
 test_var <- ifelse(ind_voters2$russia16 == 1, 1, 0)
 t.test(test_var, mu = 0.5)
 ```
-Statistically significant result. We reject the null hypothesis. There is evidence in the data in support of the alternative hypothesis. Since we ran a two-tailed test we are able to report that the calculated t-statistic of 2.9141 is in the upper tail, that is pointing to the conclusion that a majority of independent voters believe that Russian interference did in fact occur, and hence by the logic laid out in our introduction, that only a minority of independent voters find the federal investigation baseless.
+Statistically significant result. We reject the null hypothesis. There is evidence in the data in support of the alternative hypothesis. Since we ran a two-tailed test we are able to report that the calculated t-statistic of 2.9141 is in the upper tail, that is pointing to the conclusion that a majority of independent voters believe that Russian interference did in fact occur, and hence by the logic laid out in our introduction, that only a minority of independent voters find the federal investigation baseless, the null hypothesis can be rejected. 
 
-In terms of practical significance, given the polarization and relative parity of the Democratic and Republican voting blocks, if indeed in the population 56% of independent voters believe that the federal investigation is waranted and that motivates them to vote against the party that benefitted from the alledged interference, that could be a very significant effect. In close elections, which are usually zero-sum games, a 6% percent swing from parity to one side is actually a 12% swing in the overall result. In the political campaign world that is massive, even when it is only among a subsection of the electorate. And in this case that happens to be the most sought after group of voters.
+In terms of practical significance, given the polarization and relative parity of the Democratic and Republican voting blocks, if indeed in the population 56% of independent voters believe that the federal investigation is warranted and that motivates them to vote against the party that benefited from the alleged interference, that could be a very significant effect. In close elections, which are usually zero-sum games, a 6% percent swing from parity to one side is actually a 12% swing in the overall result. In the political campaign world that is massive, even when it is only among a subsection of the electorate. And in this case that happens to be the most sought after group of voters.
 
 ## Question 4: Was anger or fear more effective at driving increases in voter turnout from 2016 to 2018?
 
@@ -131,7 +131,7 @@ In terms of practical significance, given the polarization and relative parity o
 Explain how your variables are operationalized.  Comment on any gaps that you can identify between your operational definitions and the concepts you are trying to study.
 
 *Introduction:*
-This question is complex and touches on several different ideas than need to be unpacked. First we need to find in the dataset some measure of voter fear and anger. Then we need to address if it is at all feasible to reason about "effectiveness in driving voter increases". Finally, we need to somehow define what voter turnout increases between 2016 and 2018 might be and what sample from the dataset might reflect those.
+This question is complex and touches on several different ideas than need to be unpacked. First we need to find in the dataset some measure of voter fear and anger. Then we need to address if it is at all feasible to reason about "effectiveness in driving voter increases". Finally, we need to somehow define what voter turnout increases between 2016 and 2018 might be and what sample from the dataset might reflect that.
 
 *Variables*
 The leading candidates for looking at voter anger and fear and `geangry` and `geafraid` - two ordinal variables measuring the reaction to possible responses to the question "Generally speaking, how do you feel about the way things are going in the country these days?" The scale ranges from 1 (Not at all) to 5 (Extremely).
@@ -141,7 +141,7 @@ There are two other candidate survey questions featuring fear and anger, but the
 *Gaps*
 The crucial gap here is that the question is implicitly one about causality. Further more, it presumes that anger and fear drive (cause) higher turnout and asks which of the causal effects is stronger. We cannot answer that question with this data. What we can look into is whether there's a difference between the anger/fear responses of those who voted in 2018 after sitting out the 2016 election and the responses of those who didn't vote in either.
 
-The second gap is closely connected to choosing our sample. The 2018 election did indeed see a historically high turnout, but still that was lower that the turnout of the 2016 election. The reason is that 2016 was a presidential electon year, while 2018 was only a midterm election and those typically have lower turnouts than presidential elections.
+The second gap is closely connected to choosing our sample. The 2018 election did indeed see a historically high turnout, but still that was lower than the turnout of the 2016 election. The reason is that 2016 was a presidential election year, while 2018 was only a midterm election and those typically have lower turnouts than presidential elections.
 
 *Operationalization and population*
 In order to address the question, while at the same time acknowledging the two significant gaps, we are going to make the case that by comparing a sample of people who voted in 2018, but not in 2016 to a sample of people who didn't vote in either election, we are indeed looking at "an increase" in turnout. To put it slightly differently, it can be reasonably expected that close to an entirety of the population of people who care about elections and do vote would definitely turn up for the most consequential of elections - that for President. Under that scenario, in your run-of-the-mill regular midterm election, midterm voters can reasonably be expected to be a subset of those who usually vote for President. So if we see a substantial group of voters voting in a midterm election after not voting for President, we can reason that those voters represent an increase in turnout. 
@@ -152,7 +152,7 @@ For extracting the two samples, we first start with our `voter_sample` dataframe
 to_increase <- voter_sample[which((voter_sample$turnout16 == 2 | voter_sample$turnout16b == 2) & voter_sample$birthyr < 1999),]
 ```
 
-Then for the sample of non-voters we go back to the entire dataset, filter out our 2018 voters and then grab just those who were eleigible in 2016, but didn't vote.
+Then for the sample of non-voters we go back to the entire dataset, filter out our 2018 voters and then grab just those who were eligible in 2016, but didn't vote.
 
 ```{r}
 non_vote <- A[which((A$turnout16 == 2 | A$turnout16b == 2) & A$turnout18 > 3 & A$birthyr < 1999),]
